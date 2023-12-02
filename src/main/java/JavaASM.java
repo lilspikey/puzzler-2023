@@ -61,10 +61,15 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(PrintStatement statement) {
+        Label label;
+        if (statement.lineLabel() != null) {
+            label = new Label();
+            linesToLabels.put(statement.lineLabel(), label);
+        } else {
+            label = null;
+        }
         methodCallbacks.add(methodVisitor -> {
-            if (statement.lineLabel() != null) {
-                var label = new Label();
-                linesToLabels.put(statement.lineLabel(), label);
+            if (label != null) {
                 methodVisitor.visitLabel(label);
             }
             methodVisitor.visitFieldInsn(GETSTATIC,
