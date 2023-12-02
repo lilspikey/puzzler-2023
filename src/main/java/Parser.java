@@ -31,14 +31,10 @@ public class Parser {
         Statement statement = null;
         if (first.type() == Token.Type.KEYWORD) {
             Keyword keyword = first.asKeyword();
-            switch (keyword) {
-                case PRINT:
-                    statement = nextPrintStatement(label, tokenizer);
-                    break;
-                case GOTO:
-                    statement = nextGotoStatement(label, tokenizer);
-                    break;
-            }
+            statement = switch (keyword) {
+                case PRINT -> nextPrintStatement(label, tokenizer);
+                case GOTO -> nextGotoStatement(label, tokenizer);
+            };
         }
         Token end = tokenizer.peek();
         if (end.type() != Token.Type.EOL && end.type() != Token.Type.EOF) {
@@ -55,18 +51,13 @@ public class Parser {
         List<String> strings = new ArrayList<>();
         boolean done = false;
         while (!done) {
-            switch(tokenizer.peek().type()) {
-                case STRING: {
+            switch (tokenizer.peek().type()) {
+                case STRING -> {
                     Token token = tokenizer.next();
                     strings.add(token.text());
-                    break;
                 }
-                case EOL:
-                case EOF:
-                    done = true;
-                    break;
-                default:
-                    throw new IllegalStateException("Unexpected token: " + tokenizer.peek());
+                case EOL, EOF -> done = true;
+                default -> throw new IllegalStateException("Unexpected token: " + tokenizer.peek());
             }
         }
         return new PrintStatement(label, strings);
