@@ -11,12 +11,29 @@ public class Tokenizer {
     private final Map<String, Keyword> keywordMapping = Arrays.stream(Keyword.values())
         .collect(Collectors.toMap(String::valueOf, Function.identity()));
     private final PushbackReader reader;
+    private Token peeked;
 
     public Tokenizer(Reader reader) {
         this.reader = new PushbackReader(reader);
     }
 
+    public Token peek() throws IOException {
+        if (peeked == null) {
+            peeked = readNext();
+        }
+        return peeked;
+    }
+
     public Token next() throws IOException {
+        if (peeked != null) {
+            Token next = peeked;
+            peeked = null;
+            return next;
+        }
+        return readNext();
+    }
+
+    private Token readNext() throws IOException {
         while (true) {
             int c = reader.read();
             if (c == -1) {
