@@ -1,4 +1,5 @@
 import ast.AstVisitor;
+import ast.FloatAssignment;
 import ast.GotoStatement;
 import ast.PrintStatement;
 import ast.Statement;
@@ -15,6 +16,11 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(GotoStatement statement) {
         System.out.println(lineLabelPrefix(statement) + " GOTO " + statement.destinationLabel());
+    }
+
+    @Override
+    public void visit(FloatAssignment statement) {
+        System.out.println(lineLabelPrefix(statement) + " " + statement.name() + " = " + statement.value());
     }
 
     private String lineLabelPrefix(Statement statement) {

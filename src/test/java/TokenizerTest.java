@@ -49,7 +49,7 @@ class TokenizerTest {
         assertEquals(
             List.of(
                 new Token("100", Token.Type.NUMBER),
-                new Token("R", Token.Type.VAR),
+                new Token("R", Token.Type.NAME),
                 new Token("=", Token.Type.SYMBOL),
                 new Token("0", Token.Type.NUMBER),
                 new Token(null, Token.Type.EOF)

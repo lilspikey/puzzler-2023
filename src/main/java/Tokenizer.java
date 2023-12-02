@@ -51,7 +51,7 @@ public class Tokenizer {
                 if (keywordMapping.containsKey(text)) {
                     return new Token(text, Token.Type.KEYWORD);
                 }
-                return new Token(text, Token.Type.VAR);
+                return new Token(text, Token.Type.NAME);
             }
             if (isDigit(c)) {
                 reader.unread(c);

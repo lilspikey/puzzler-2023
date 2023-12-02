@@ -9,7 +9,7 @@ public record Token(String text, Type type) {
     public enum Type {
         KEYWORD,
         NUMBER,
-        VAR,
+        NAME,
         STRING,
         SYMBOL,
         EOL,

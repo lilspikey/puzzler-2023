@@ -1,3 +1,4 @@
+import ast.FloatAssignment;
 import ast.GotoStatement;
 import ast.PrintStatement;
 import ast.Program;
@@ -35,6 +36,8 @@ public class Parser {
                 case PRINT -> nextPrintStatement(label, tokenizer);
                 case GOTO -> nextGotoStatement(label, tokenizer);
             };
+        } else if (first.type() == Token.Type.NAME) {
+            return nextFloatAssignment(label, tokenizer);
         }
         Token end = tokenizer.peek();
         if (end.type() != Token.Type.EOL && end.type() != Token.Type.EOF) {
@@ -69,6 +72,13 @@ public class Parser {
         return new GotoStatement(label, destinationLabel.text());
     }
 
+    private FloatAssignment nextFloatAssignment(String label, Tokenizer tokenizer) throws IOException {
+        Token name = nextExpectedName(tokenizer);
+        nextExpectedSymbol(tokenizer, "=");
+        Token value = nextExpectedNumber(tokenizer);
+        return new FloatAssignment(label, name.text(), Float.parseFloat(value.text()));
+    }
+
     private void nextExpectedKeyword(Tokenizer tokenizer, Keyword expected) throws IOException {
         Token token = tokenizer.next();
         if (token.type() != Token.Type.KEYWORD || token.asKeyword() != expected) {
@@ -76,10 +86,26 @@ public class Parser {
         }
     }
 
+    private Token nextExpectedName(Tokenizer tokenizer) throws IOException {
+        Token token = tokenizer.next();
+        if (token.type() != Token.Type.NAME) {
+            throw new IllegalStateException("Expected name got: " + token);
+        }
+        return token;
+    }
+
     private Token nextExpectedNumber(Tokenizer tokenizer) throws IOException {
         Token token = tokenizer.next();
         if (token.type() != Token.Type.NUMBER) {
             throw new IllegalStateException("Expected number got: " + token);
+        }
+        return token;
+    }
+
+    private Token nextExpectedSymbol(Tokenizer tokenizer, String expected) throws IOException {
+        Token token = tokenizer.next();
+        if (token.type() != Token.Type.SYMBOL || !expected.equals(token.text())) {
+            throw new IllegalStateException("Expected " + expected +" got: " + token);
         }
         return token;
     }

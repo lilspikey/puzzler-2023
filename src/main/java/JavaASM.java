@@ -1,4 +1,5 @@
 import ast.AstVisitor;
+import ast.FloatAssignment;
 import ast.GotoStatement;
 import ast.PrintStatement;
 import org.objectweb.asm.ClassReader;
@@ -13,14 +14,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import static org.objectweb.asm.Opcodes.ASM4;
+import static org.objectweb.asm.Opcodes.FSTORE;
 import static org.objectweb.asm.Opcodes.GETSTATIC;
 import static org.objectweb.asm.Opcodes.GOTO;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 
 public class JavaASM implements AstVisitor {
+    private final AtomicInteger nextLocalVarIndex = new AtomicInteger();
+    private final Map<String, Integer> localFloatVarIndexes = new HashMap<>();
     private final Map<String, Label> linesToLabels = new HashMap<>();
     private final List<Consumer<MethodVisitor>> methodCallbacks = new ArrayList<>();
 
@@ -93,5 +98,18 @@ public class JavaASM implements AstVisitor {
             }
             methodVisitor.visitJumpInsn(GOTO, label);
         });
+    }
+
+    @Override
+    public void visit(FloatAssignment statement) {
+        var index = getLocalFloatVarIndex(statement.name());
+        methodCallbacks.add(methodVisitor -> {
+            methodVisitor.visitLdcInsn(statement.value());
+            methodVisitor.visitVarInsn(FSTORE, index);
+        });
+    }
+
+    private int getLocalFloatVarIndex(String name) {
+        return localFloatVarIndexes.computeIfAbsent(name, n -> nextLocalVarIndex.getAndIncrement());
     }
 }
