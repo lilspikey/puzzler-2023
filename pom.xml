@@ -7,4 +7,18 @@
   <groupId>com.littlespikeyland.com</groupId>
   <artifactId>puzzler2023</artifactId>
   <version>0.0.1</version>
+
+  <properties>
+    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.10.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 </project>
