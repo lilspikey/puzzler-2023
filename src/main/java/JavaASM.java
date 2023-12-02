@@ -4,19 +4,24 @@ import ast.PrintStatement;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.objectweb.asm.Opcodes.ASM4;
 import static org.objectweb.asm.Opcodes.GETSTATIC;
+import static org.objectweb.asm.Opcodes.GOTO;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 
 public class JavaASM implements AstVisitor {
+    private final Map<String, Label> linesToLabels = new HashMap<>();
     private final List<Consumer<MethodVisitor>> methodCallbacks = new ArrayList<>();
 
     public byte[] generateClass(String className) throws IOException {
@@ -57,6 +62,11 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(PrintStatement statement) {
         methodCallbacks.add(methodVisitor -> {
+            if (statement.lineLabel() != null) {
+                var label = new Label();
+                linesToLabels.put(statement.lineLabel(), label);
+                methodVisitor.visitLabel(label);
+            }
             methodVisitor.visitFieldInsn(GETSTATIC,
                     "java/lang/System",
                     "out",
@@ -72,7 +82,11 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(GotoStatement statement) {
         methodCallbacks.add(methodVisitor -> {
-
+            var label = linesToLabels.get(statement.destinationLabel());
+            if (label == null) {
+                throw new IllegalStateException("Unknown destination label: " + statement);
+            }
+            methodVisitor.visitJumpInsn(GOTO, label);
         });
     }
 }
