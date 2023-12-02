@@ -2,6 +2,7 @@ import ast.AstVisitor;
 import ast.FloatAssignment;
 import ast.GotoStatement;
 import ast.PrintStatement;
+import ast.Statement;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -66,17 +67,7 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(PrintStatement statement) {
-        Label label;
-        if (statement.lineLabel() != null) {
-            label = new Label();
-            linesToLabels.put(statement.lineLabel(), label);
-        } else {
-            label = null;
-        }
-        methodCallbacks.add(methodVisitor -> {
-            if (label != null) {
-                methodVisitor.visitLabel(label);
-            }
+        addCallback(statement, methodVisitor -> {
             methodVisitor.visitFieldInsn(GETSTATIC,
                     "java/lang/System",
                     "out",
@@ -91,7 +82,7 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(GotoStatement statement) {
-        methodCallbacks.add(methodVisitor -> {
+        addCallback(statement, methodVisitor -> {
             var label = linesToLabels.get(statement.destinationLabel());
             if (label == null) {
                 throw new IllegalStateException("Unknown destination label: " + statement);
@@ -103,10 +94,29 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(FloatAssignment statement) {
         var index = getLocalFloatVarIndex(statement.name());
-        methodCallbacks.add(methodVisitor -> {
+        addCallback(statement, methodVisitor -> {
             methodVisitor.visitLdcInsn(statement.value());
             methodVisitor.visitVarInsn(FSTORE, index);
         });
+    }
+
+    private void addCallback(Statement statement, Consumer<MethodVisitor> callback) {
+        var label = createLineLabel(statement);
+        methodCallbacks.add(methodVisitor -> {
+            if (label != null) {
+                methodVisitor.visitLabel(label);
+            }
+            callback.accept(methodVisitor);
+        });
+    }
+
+    private Label createLineLabel(Statement statement) {
+        if (statement.lineLabel() != null) {
+            var label = new Label();
+            linesToLabels.put(statement.lineLabel(), label);
+            return label;
+        }
+        return null;
     }
 
     private int getLocalFloatVarIndex(String name) {
