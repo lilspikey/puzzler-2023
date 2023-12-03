@@ -21,21 +21,26 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM4;
+import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.FLOAD;
 import static org.objectweb.asm.Opcodes.FSTORE;
-import static org.objectweb.asm.Opcodes.GETSTATIC;
 import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.NEW;
 
 public class JavaASM implements AstVisitor {
-    private final AtomicInteger nextLocalVarIndex = new AtomicInteger();
+    private String className;
+    private final AtomicInteger nextLocalVarIndex = new AtomicInteger(1);
     private final Map<String, Integer> localFloatVarIndexes = new HashMap<>();
     private final Map<String, Label> linesToLabels = new HashMap<>();
     private final List<Consumer<MethodVisitor>> methodCallbacks = new ArrayList<>();
     private MethodVisitor currentMethodVisitor;
 
     public byte[] generateClass(String className) throws IOException {
+        this.className = className;
         ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
         ClassVisitor classVisitor = new ClassVisitor(ASM4, classWriter) {
             @Override
@@ -46,54 +51,63 @@ public class JavaASM implements AstVisitor {
             @Override
             public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
                 var methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
-                if ("main".equals(name)) {
+                if ("run".equals(name)) {
                     currentMethodVisitor = methodVisitor;
                     methodVisitor.visitCode();
                     for (var callback: methodCallbacks) {
                         callback.accept(methodVisitor);
                     }
                     methodVisitor.visitEnd();
+                } else if ("main".equals(name)) {
+                    methodVisitor.visitCode();
+                    // simple main method that basically does
+                    // new <className>().run();
+                    methodVisitor.visitTypeInsn(NEW, className);
+                    methodVisitor.visitInsn(DUP);
+                    methodVisitor.visitMethodInsn(INVOKESPECIAL,
+                            className,
+                            "<init>",
+                            "()V");
+                    methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                            className,
+                            "run",
+                            "()V");
+                    methodVisitor.visitEnd();
                 }
                 return methodVisitor;
             }
         };
-        try (var in = getTemplateClassBytes()) {
+        try (var in = getBasRuntimeClassBytes()) {
             ClassReader reader = new ClassReader(in);
             reader.accept(classVisitor, 0);
             return classWriter.toByteArray();
         }
     }
 
-    private InputStream getTemplateClassBytes() {
-        String className = Template.class.getName();
+    private InputStream getBasRuntimeClassBytes() {
+        String className = BasRuntime.class.getName();
         String classAsPath = className.replace('.', '/') + ".class";
-        return Template.class.getClassLoader().getResourceAsStream(classAsPath);
+        return BasRuntime.class.getClassLoader().getResourceAsStream(classAsPath);
     }
 
     @Override
     public void visit(PrintStatement statement) {
         addCallback(statement, methodVisitor -> {
             for (var expression: statement.expressions()) {
-                methodVisitor.visitFieldInsn(GETSTATIC,
-                        "java/lang/System",
-                        "out",
-                        "Ljava/io/PrintStream;");
+                methodVisitor.visitVarInsn(ALOAD, 0);
                 expression.visit(this);
                 var paramDescriptor = switch (expression.getDataType()) {
                     case FLOAT -> "(F)V";
                     case STRING -> "(Ljava/lang/String;)V";
                 };
                 methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
-                        "java/io/PrintStream",
+                        className,
                         "print",
                         paramDescriptor);
             }
-            methodVisitor.visitFieldInsn(GETSTATIC,
-                    "java/lang/System",
-                    "out",
-                    "Ljava/io/PrintStream;");
+            methodVisitor.visitVarInsn(ALOAD, 0);
             methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
-                    "java/io/PrintStream",
+                    className,
                     "println",
                     "()V");
         });
