@@ -1,5 +1,6 @@
 import ast.AstVisitor;
 import ast.FloatAssignment;
+import ast.FloatConstant;
 import ast.GotoStatement;
 import ast.PrintStatement;
 import ast.Statement;
@@ -67,7 +68,6 @@ public class JavaASM implements AstVisitor {
         return Template.class.getClassLoader().getResourceAsStream(classAsPath);
     }
 
-
     @Override
     public void visit(PrintStatement statement) {
         addCallback(statement, methodVisitor -> {
@@ -77,10 +77,14 @@ public class JavaASM implements AstVisitor {
                         "out",
                         "Ljava/io/PrintStream;");
                 expression.visit(this);
+                var paramDescriptor = switch (expression.getDataType()) {
+                    case FLOAT -> "(F)V";
+                    case STRING -> "(Ljava/lang/String;)V";
+                };
                 methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
                         "java/io/PrintStream",
                         "print",
-                        "(Ljava/lang/String;)V");
+                        paramDescriptor);
             }
             methodVisitor.visitFieldInsn(GETSTATIC,
                     "java/lang/System",
@@ -108,13 +112,18 @@ public class JavaASM implements AstVisitor {
     public void visit(FloatAssignment statement) {
         var index = getLocalFloatVarIndex(statement.name());
         addCallback(statement, methodVisitor -> {
-            methodVisitor.visitLdcInsn(statement.value());
+            statement.expression().visit(this);
             methodVisitor.visitVarInsn(FSTORE, index);
         });
     }
 
     @Override
     public void visit(StringConstant expression) {
+        currentMethodVisitor.visitLdcInsn(expression.constant());
+    }
+
+    @Override
+    public void visit(FloatConstant expression) {
         currentMethodVisitor.visitLdcInsn(expression.constant());
     }
 

@@ -1,5 +1,6 @@
 import ast.Expression;
 import ast.FloatAssignment;
+import ast.FloatConstant;
 import ast.GotoStatement;
 import ast.PrintStatement;
 import ast.Program;
@@ -39,7 +40,7 @@ public class Parser {
                 case GOTO -> nextGotoStatement(label, tokenizer);
             };
         } else if (first.type() == Token.Type.NAME) {
-            return nextFloatAssignment(label, tokenizer);
+            statement = nextFloatAssignment(label, tokenizer);
         }
         Token end = tokenizer.peek();
         if (end.type() != Token.Type.EOL && end.type() != Token.Type.EOF) {
@@ -61,6 +62,10 @@ public class Parser {
                     Token token = tokenizer.next();
                     expressions.add(new StringConstant(token.text()));
                 }
+                case NUMBER -> {
+                    Token token = tokenizer.next();
+                    expressions.add(new FloatConstant(Float.parseFloat(token.text())));
+                }
                 case EOL, EOF -> done = true;
                 default -> throw new IllegalStateException("Unexpected token: " + tokenizer.peek());
             }
@@ -78,7 +83,7 @@ public class Parser {
         Token name = nextExpectedName(tokenizer);
         nextExpectedSymbol(tokenizer, "=");
         Token value = nextExpectedNumber(tokenizer);
-        return new FloatAssignment(label, name.text(), Float.parseFloat(value.text()));
+        return new FloatAssignment(label, name.text(), new FloatConstant(Float.parseFloat(value.text())));
     }
 
     private void nextExpectedKeyword(Tokenizer tokenizer, Keyword expected) throws IOException {

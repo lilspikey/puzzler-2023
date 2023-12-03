@@ -8,4 +8,6 @@ public interface AstVisitor {
     void visit(FloatAssignment statement);
 
     void visit(StringConstant expression);
+
+    void visit(FloatConstant expression);
 }
