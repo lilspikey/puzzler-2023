@@ -1,6 +1,8 @@
+import ast.DataType;
 import ast.Expression;
 import ast.FloatAssignment;
 import ast.FloatConstant;
+import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.PrintStatement;
 import ast.Program;
@@ -58,19 +60,21 @@ public class Parser {
         boolean done = false;
         while (!done) {
             switch (tokenizer.peek().type()) {
-                case STRING -> {
-                    Token token = tokenizer.next();
-                    expressions.add(new StringConstant(token.text()));
-                }
-                case NUMBER -> {
-                    Token token = tokenizer.next();
-                    expressions.add(new FloatConstant(Float.parseFloat(token.text())));
-                }
                 case EOL, EOF -> done = true;
-                default -> throw new IllegalStateException("Unexpected token: " + tokenizer.peek());
+                default -> expressions.add(nextExpression(tokenizer));
             }
         }
         return new PrintStatement(label, expressions);
+    }
+
+    private Expression nextExpression(Tokenizer tokenizer) throws IOException {
+        Token token = tokenizer.next();
+        return switch (token.type()) {
+            case STRING -> new StringConstant(token.text());
+            case NUMBER -> new FloatConstant(Float.parseFloat(token.text()));
+            case NAME -> new FloatVariable(token.text());
+            default -> throw new IllegalStateException("Unexpected token: " + tokenizer.peek());
+        };
     }
 
     private GotoStatement nextGotoStatement(String label, Tokenizer tokenizer) throws IOException {
@@ -82,8 +86,11 @@ public class Parser {
     private FloatAssignment nextFloatAssignment(String label, Tokenizer tokenizer) throws IOException {
         Token name = nextExpectedName(tokenizer);
         nextExpectedSymbol(tokenizer, "=");
-        Token value = nextExpectedNumber(tokenizer);
-        return new FloatAssignment(label, name.text(), new FloatConstant(Float.parseFloat(value.text())));
+        Expression expression = nextExpression(tokenizer);
+        if (expression.getDataType() != DataType.FLOAT) {
+            throw new IllegalStateException("Expected float expression, but got: " + expression);
+        }
+        return new FloatAssignment(label, name.text(), expression);
     }
 
     private void nextExpectedKeyword(Tokenizer tokenizer, Keyword expected) throws IOException {

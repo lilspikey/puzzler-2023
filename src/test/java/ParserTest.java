@@ -1,5 +1,6 @@
 import ast.FloatAssignment;
 import ast.FloatConstant;
+import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.PrintStatement;
 import ast.Program;
@@ -37,13 +38,13 @@ class ParserTest {
         Parser parser = new Parser();
         Program program = parser.parse(new StringReader(
                 "100 A = 1\n" +
-                        "200 PRINT 2"
+                        "200 PRINT A"
         ));
         assertEquals(
             new Program(
                 List.of(
                     new FloatAssignment("100", "A", new FloatConstant(1.0f)),
-                    new PrintStatement("200", List.of(new FloatConstant(2.0f)))
+                    new PrintStatement("200", List.of(new FloatVariable("A")))
                 )
             ),
             program

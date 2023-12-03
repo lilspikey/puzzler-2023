@@ -1,6 +1,7 @@
 import ast.AstVisitor;
 import ast.FloatAssignment;
 import ast.FloatConstant;
+import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.PrintStatement;
 import ast.Statement;
@@ -15,6 +16,7 @@ public class ProgramListing implements AstVisitor {
         System.out.print(lineLabelPrefix(statement) + " PRINT ");
         for (var expression: statement.expressions()) {
             expression.visit(this);
+            System.out.print(' ');
         }
         System.out.println();
     }
@@ -33,12 +35,17 @@ public class ProgramListing implements AstVisitor {
 
     @Override
     public void visit(StringConstant expression) {
-        System.out.print(expression.constant());
+        System.out.print('\"' + expression.constant() + '\"');
     }
 
     @Override
     public void visit(FloatConstant expression) {
         System.out.print(expression.constant());
+    }
+
+    @Override
+    public void visit(FloatVariable expression) {
+        System.out.print(expression.name());
     }
 
     private String lineLabelPrefix(Statement statement) {

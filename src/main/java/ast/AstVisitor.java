@@ -10,4 +10,6 @@ public interface AstVisitor {
     void visit(StringConstant expression);
 
     void visit(FloatConstant expression);
+
+    void visit(FloatVariable expression);
 }
