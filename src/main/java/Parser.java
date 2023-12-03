@@ -1,8 +1,10 @@
+import ast.Expression;
 import ast.FloatAssignment;
 import ast.GotoStatement;
 import ast.PrintStatement;
 import ast.Program;
 import ast.Statement;
+import ast.StringConstant;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -51,19 +53,19 @@ public class Parser {
 
     private PrintStatement nextPrintStatement(String label, Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.PRINT);
-        List<String> strings = new ArrayList<>();
+        List<Expression> expressions = new ArrayList<>();
         boolean done = false;
         while (!done) {
             switch (tokenizer.peek().type()) {
                 case STRING -> {
                     Token token = tokenizer.next();
-                    strings.add(token.text());
+                    expressions.add(new StringConstant(token.text()));
                 }
                 case EOL, EOF -> done = true;
                 default -> throw new IllegalStateException("Unexpected token: " + tokenizer.peek());
             }
         }
-        return new PrintStatement(label, strings);
+        return new PrintStatement(label, expressions);
     }
 
     private GotoStatement nextGotoStatement(String label, Tokenizer tokenizer) throws IOException {

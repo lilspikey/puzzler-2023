@@ -6,4 +6,6 @@ public interface AstVisitor {
     void visit(GotoStatement statement);
 
     void visit(FloatAssignment statement);
+
+    void visit(StringConstant expression);
 }

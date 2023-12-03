@@ -3,6 +3,7 @@ import ast.FloatAssignment;
 import ast.GotoStatement;
 import ast.PrintStatement;
 import ast.Statement;
+import ast.StringConstant;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -29,6 +30,7 @@ public class JavaASM implements AstVisitor {
     private final Map<String, Integer> localFloatVarIndexes = new HashMap<>();
     private final Map<String, Label> linesToLabels = new HashMap<>();
     private final List<Consumer<MethodVisitor>> methodCallbacks = new ArrayList<>();
+    private MethodVisitor currentMethodVisitor;
 
     public byte[] generateClass(String className) throws IOException {
         ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
@@ -42,6 +44,7 @@ public class JavaASM implements AstVisitor {
             public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
                 var methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
                 if ("main".equals(name)) {
+                    currentMethodVisitor = methodVisitor;
                     methodVisitor.visitCode();
                     for (var callback: methodCallbacks) {
                         callback.accept(methodVisitor);
@@ -68,15 +71,25 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(PrintStatement statement) {
         addCallback(statement, methodVisitor -> {
+            for (var expression: statement.expressions()) {
+                methodVisitor.visitFieldInsn(GETSTATIC,
+                        "java/lang/System",
+                        "out",
+                        "Ljava/io/PrintStream;");
+                expression.visit(this);
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                        "java/io/PrintStream",
+                        "print",
+                        "(Ljava/lang/String;)V");
+            }
             methodVisitor.visitFieldInsn(GETSTATIC,
                     "java/lang/System",
                     "out",
                     "Ljava/io/PrintStream;");
-            methodVisitor.visitLdcInsn(statement.strings().get(0));
             methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
                     "java/io/PrintStream",
                     "println",
-                    "(Ljava/lang/String;)V");
+                    "()V");
         });
     }
 
@@ -98,6 +111,11 @@ public class JavaASM implements AstVisitor {
             methodVisitor.visitLdcInsn(statement.value());
             methodVisitor.visitVarInsn(FSTORE, index);
         });
+    }
+
+    @Override
+    public void visit(StringConstant expression) {
+        currentMethodVisitor.visitLdcInsn(expression.constant());
     }
 
     private void addCallback(Statement statement, Consumer<MethodVisitor> callback) {

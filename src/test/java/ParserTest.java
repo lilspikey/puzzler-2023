@@ -1,6 +1,7 @@
 import ast.GotoStatement;
 import ast.PrintStatement;
 import ast.Program;
+import ast.StringConstant;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -21,7 +22,7 @@ class ParserTest {
         assertEquals(
             new Program(
                 List.of(
-                    new PrintStatement("100", List.of("HELLO WORLD")),
+                    new PrintStatement("100", List.of(new StringConstant("HELLO WORLD"))),
                     new GotoStatement("200", "100")
                 )
             ),

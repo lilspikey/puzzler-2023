@@ -3,6 +3,7 @@ import ast.FloatAssignment;
 import ast.GotoStatement;
 import ast.PrintStatement;
 import ast.Statement;
+import ast.StringConstant;
 
 /*
  Just a simple visitor to walk the AST and print it out
@@ -10,7 +11,11 @@ import ast.Statement;
 public class ProgramListing implements AstVisitor {
     @Override
     public void visit(PrintStatement statement) {
-        System.out.println(lineLabelPrefix(statement) + " PRINT " + String.join(" ", statement.strings()));
+        System.out.print(lineLabelPrefix(statement) + " PRINT ");
+        for (var expression: statement.expressions()) {
+            expression.visit(this);
+        }
+        System.out.println();
     }
 
     @Override
@@ -21,6 +26,11 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(FloatAssignment statement) {
         System.out.println(lineLabelPrefix(statement) + " " + statement.name() + " = " + statement.value());
+    }
+
+    @Override
+    public void visit(StringConstant expression) {
+        System.out.print(expression.constant());
     }
 
     private String lineLabelPrefix(Statement statement) {
