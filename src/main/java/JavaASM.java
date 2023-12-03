@@ -1,3 +1,4 @@
+import ast.FloatAddition;
 import ast.AstVisitor;
 import ast.FloatAssignment;
 import ast.FloatConstant;
@@ -25,6 +26,7 @@ import java.util.function.Consumer;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM4;
 import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.FADD;
 import static org.objectweb.asm.Opcodes.FLOAD;
 import static org.objectweb.asm.Opcodes.FSTORE;
 import static org.objectweb.asm.Opcodes.GOTO;
@@ -161,6 +163,13 @@ public class JavaASM implements AstVisitor {
     public void visit(FloatVariable expression) {
         var index = getLocalFloatVarIndex(expression.name());
         currentMethodVisitor.visitVarInsn(FLOAD, index);
+    }
+
+    @Override
+    public void visit(FloatAddition expression) {
+        expression.lhs().visit(this);
+        expression.rhs().visit(this);
+        currentMethodVisitor.visitInsn(FADD);
     }
 
     private void addCallback(Statement statement, Consumer<MethodVisitor> callback) {

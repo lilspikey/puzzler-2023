@@ -96,7 +96,7 @@ public class Tokenizer {
     }
 
     private boolean isSymbol(int c) {
-        return c == '=';
+        return c == '=' || c == '+';
     }
 
 }

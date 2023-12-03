@@ -1,5 +1,6 @@
 import ast.DataType;
 import ast.Expression;
+import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatInput;
@@ -70,6 +71,20 @@ public class Parser {
     }
 
     private Expression nextExpression(Tokenizer tokenizer) throws IOException {
+        Expression lhs = nextAtomExpression(tokenizer);
+        while (true) {
+            Token maybeOp = tokenizer.peek();
+            if (maybeOp.type() == Token.Type.SYMBOL && "+".equals(maybeOp.text())) {
+                nextExpectedSymbol(tokenizer, "+");
+                Expression rhs = nextAtomExpression(tokenizer);
+                lhs = new FloatAddition(lhs, rhs);
+            } else {
+                return lhs;
+            }
+        }
+    }
+
+    private Expression nextAtomExpression(Tokenizer tokenizer) throws IOException {
         Token token = tokenizer.next();
         return switch (token.type()) {
             case STRING -> new StringConstant(token.text());

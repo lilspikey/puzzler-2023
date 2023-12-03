@@ -1,3 +1,4 @@
+import ast.FloatAddition;
 import ast.AstVisitor;
 import ast.FloatAssignment;
 import ast.FloatConstant;
@@ -52,6 +53,15 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(FloatVariable expression) {
         System.out.print(expression.name());
+    }
+
+    @Override
+    public void visit(FloatAddition expression) {
+        System.out.print("(");
+        expression.lhs().visit(this);
+        System.out.print("+");
+        expression.rhs().visit(this);
+        System.out.print("(");
     }
 
     private String lineLabelPrefix(Statement statement) {

@@ -1,3 +1,4 @@
+import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatVariable;
@@ -49,6 +50,32 @@ class ParserTest {
                     new PrintStatement("200", List.of(new StringConstant("A = "), new FloatVariable("A"))),
                     new FloatAssignment("300", "B", new FloatVariable("A")),
                     new PrintStatement("400", List.of(new StringConstant("B = "), new FloatVariable("B")))
+                )
+            ),
+            program
+        );
+    }
+
+    @Test
+    public void givenAddition_whenParsing_thenProgramReturned() throws IOException {
+        Parser parser = new Parser();
+        Program program = parser.parse(new StringReader(
+            "100 A = 2\n" +
+            "200 A = A + 1 + 2"
+        ));
+        // make sure addition if left associative
+        assertEquals(
+            new Program(
+                List.of(
+                    new FloatAssignment("100", "A", new FloatConstant(2.0f)),
+                    new FloatAssignment("200", "A",
+                        new FloatAddition(
+                            new FloatAddition(
+                                new FloatVariable("A"), new FloatConstant(1.0f)
+                            ),
+                            new FloatConstant(2.0f)
+                        )
+                    )
                 )
             ),
             program
