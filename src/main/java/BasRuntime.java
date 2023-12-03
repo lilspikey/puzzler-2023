@@ -1,3 +1,5 @@
+import java.text.DecimalFormat;
+import java.text.MessageFormat;
 import java.util.Scanner;
 
 /*
@@ -10,8 +12,9 @@ public class BasRuntime {
     void print(String s) {
         System.out.print(s);
     }
+
     void print(float f) {
-        System.out.print(f);
+        System.out.print(MessageFormat.format("{0,number,0.###}", f));
     }
 
     void println() {
