@@ -4,6 +4,7 @@ import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatInput;
+import ast.FloatMultiplication;
 import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.PrintStatement;
@@ -15,8 +16,14 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Parser {
+    private final Map<String, Integer> operatorPrecedence = Map.of(
+        "+", 1,
+        "*", 2
+    );
+
     public Program parse(Reader source) throws IOException {
         Tokenizer tokenizer = new Tokenizer(source);
         List<Statement> statements = new ArrayList<>();
@@ -71,17 +78,30 @@ public class Parser {
     }
 
     private Expression nextExpression(Tokenizer tokenizer) throws IOException {
+        return nextExpression(tokenizer, 1);
+    }
+
+    private Expression nextExpression(Tokenizer tokenizer, int minPrecedence) throws IOException {
         Expression lhs = nextAtomExpression(tokenizer);
         while (true) {
             Token maybeOp = tokenizer.peek();
-            if (maybeOp.type() == Token.Type.SYMBOL && "+".equals(maybeOp.text())) {
-                nextExpectedSymbol(tokenizer, "+");
-                Expression rhs = nextAtomExpression(tokenizer);
-                lhs = new FloatAddition(lhs, rhs);
+            if (maybeOp.type() == Token.Type.SYMBOL && operatorPrecedence.containsKey(maybeOp.text())) {
+                int precedence = operatorPrecedence.get(maybeOp.text());
+                if (precedence < minPrecedence) {
+                    break;
+                }
+                nextExpectedSymbol(tokenizer);
+                Expression rhs = nextExpression(tokenizer, precedence + 1);
+                lhs = switch (maybeOp.text()) {
+                    case "+" -> new FloatAddition(lhs, rhs);
+                    case "*" -> new FloatMultiplication(lhs, rhs);
+                    default -> throw new IllegalStateException("Unknown operator: " + maybeOp.text());
+                };
             } else {
-                return lhs;
+                break;
             }
         }
+        return lhs;
     }
 
     private Expression nextAtomExpression(Tokenizer tokenizer) throws IOException {
@@ -135,6 +155,14 @@ public class Parser {
         Token token = tokenizer.next();
         if (token.type() != Token.Type.NUMBER) {
             throw new IllegalStateException("Expected number got: " + token);
+        }
+        return token;
+    }
+
+    private Token nextExpectedSymbol(Tokenizer tokenizer) throws IOException {
+        Token token = tokenizer.next();
+        if (token.type() != Token.Type.SYMBOL) {
+            throw new IllegalStateException("Expected symbol got: " + token);
         }
         return token;
     }

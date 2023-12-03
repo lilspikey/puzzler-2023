@@ -1,6 +1,7 @@
 import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
+import ast.FloatMultiplication;
 import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.PrintStatement;
@@ -63,7 +64,7 @@ class ParserTest {
             "100 A = 2\n" +
             "200 A = A + 1 + 2"
         ));
-        // make sure addition if left associative
+        // make sure addition is left associative
         assertEquals(
             new Program(
                 List.of(
@@ -74,6 +75,58 @@ class ParserTest {
                                 new FloatVariable("A"), new FloatConstant(1.0f)
                             ),
                             new FloatConstant(2.0f)
+                        )
+                    )
+                )
+            ),
+            program
+        );
+    }
+
+    @Test
+    public void givenMultiplication_whenParsing_thenProgramReturned() throws IOException {
+        Parser parser = new Parser();
+        Program program = parser.parse(new StringReader(
+            "100 A = 2\n" +
+            "200 A = A * 1 * 2"
+        ));
+        // make sure multiplication is left associative
+        assertEquals(
+            new Program(
+                List.of(
+                    new FloatAssignment("100", "A", new FloatConstant(2.0f)),
+                    new FloatAssignment("200", "A",
+                        new FloatMultiplication(
+                            new FloatMultiplication(
+                                new FloatVariable("A"), new FloatConstant(1.0f)
+                            ),
+                            new FloatConstant(2.0f)
+                        )
+                    )
+                )
+            ),
+            program
+        );
+    }
+
+    @Test
+    public void givenMultiplicationAndAddition_whenParsing_thenProgramReturned() throws IOException {
+        Parser parser = new Parser();
+        Program program = parser.parse(new StringReader(
+            "100 A = 2\n" +
+            "200 A = A + 3 * 2"
+        ));
+        // make sure multiplication has higher precedence than addition
+        assertEquals(
+            new Program(
+                List.of(
+                    new FloatAssignment("100", "A", new FloatConstant(2.0f)),
+                    new FloatAssignment("200", "A",
+                        new FloatAddition(
+                            new FloatVariable("A"),
+                            new FloatMultiplication(
+                                new FloatConstant(3.0f), new FloatConstant(2.0f)
+                            )
                         )
                     )
                 )

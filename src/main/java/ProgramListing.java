@@ -3,6 +3,7 @@ import ast.AstVisitor;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatInput;
+import ast.FloatMultiplication;
 import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.PrintStatement;
@@ -61,7 +62,16 @@ public class ProgramListing implements AstVisitor {
         expression.lhs().visit(this);
         System.out.print("+");
         expression.rhs().visit(this);
+        System.out.print(")");
+    }
+
+    @Override
+    public void visit(FloatMultiplication expression) {
         System.out.print("(");
+        expression.lhs().visit(this);
+        System.out.print("*");
+        expression.rhs().visit(this);
+        System.out.print(")");
     }
 
     private String lineLabelPrefix(Statement statement) {
