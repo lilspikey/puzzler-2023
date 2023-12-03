@@ -2,6 +2,7 @@ import ast.DataType;
 import ast.Expression;
 import ast.FloatAssignment;
 import ast.FloatConstant;
+import ast.FloatInput;
 import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.PrintStatement;
@@ -40,6 +41,7 @@ public class Parser {
             statement = switch (keyword) {
                 case PRINT -> nextPrintStatement(label, tokenizer);
                 case GOTO -> nextGotoStatement(label, tokenizer);
+                case INPUT -> nextInputStatement(label, tokenizer);
             };
         } else if (first.type() == Token.Type.NAME) {
             statement = nextFloatAssignment(label, tokenizer);
@@ -81,6 +83,12 @@ public class Parser {
         nextExpectedKeyword(tokenizer, Keyword.GOTO);
         Token destinationLabel = nextExpectedNumber(tokenizer);
         return new GotoStatement(label, destinationLabel.text());
+    }
+
+    private FloatInput nextInputStatement(String label, Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.INPUT);
+        Token name = nextExpectedName(tokenizer);
+        return new FloatInput(label, name.text());
     }
 
     private FloatAssignment nextFloatAssignment(String label, Tokenizer tokenizer) throws IOException {

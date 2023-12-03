@@ -1,4 +1,5 @@
 public enum Keyword {
     PRINT,
-    GOTO
+    GOTO,
+    INPUT
 }

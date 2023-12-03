@@ -1,6 +1,7 @@
 import ast.AstVisitor;
 import ast.FloatAssignment;
 import ast.FloatConstant;
+import ast.FloatInput;
 import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.PrintStatement;
@@ -121,6 +122,19 @@ public class JavaASM implements AstVisitor {
                 throw new IllegalStateException("Unknown destination label: " + statement);
             }
             methodVisitor.visitJumpInsn(GOTO, label);
+        });
+    }
+
+    @Override
+    public void visit(FloatInput statement) {
+        var index = getLocalFloatVarIndex(statement.name());
+        addCallback(statement, methodVisitor -> {
+            methodVisitor.visitVarInsn(ALOAD, 0);
+            methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                    className,
+                    "inputFloat",
+                    "()F");
+            methodVisitor.visitVarInsn(FSTORE, index);
         });
     }
 

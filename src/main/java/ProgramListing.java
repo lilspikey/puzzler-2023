@@ -1,6 +1,7 @@
 import ast.AstVisitor;
 import ast.FloatAssignment;
 import ast.FloatConstant;
+import ast.FloatInput;
 import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.PrintStatement;
@@ -31,6 +32,11 @@ public class ProgramListing implements AstVisitor {
         System.out.print(lineLabelPrefix(statement) + " " + statement.name() + " = ");
         statement.expression().visit(this);
         System.out.println();
+    }
+
+    @Override
+    public void visit(FloatInput statement) {
+        System.out.print(lineLabelPrefix(statement) + " INPUT " + statement.name());
     }
 
     @Override
