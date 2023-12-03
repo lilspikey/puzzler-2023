@@ -37,14 +37,18 @@ class ParserTest {
     public void givenAssignment_whenParsing_thenProgramReturned() throws IOException {
         Parser parser = new Parser();
         Program program = parser.parse(new StringReader(
-                "100 A = 1\n" +
-                        "200 PRINT A"
+            "100 A = 1\n" +
+            "200 PRINT \"A = \" A\n" +
+            "300 B = A\n" +
+            "400 PRINT \"B = \" B"
         ));
         assertEquals(
             new Program(
                 List.of(
                     new FloatAssignment("100", "A", new FloatConstant(1.0f)),
-                    new PrintStatement("200", List.of(new FloatVariable("A")))
+                    new PrintStatement("200", List.of(new StringConstant("A = "), new FloatVariable("A"))),
+                    new FloatAssignment("300", "B", new FloatVariable("A")),
+                    new PrintStatement("400", List.of(new StringConstant("B = "), new FloatVariable("B")))
                 )
             ),
             program
