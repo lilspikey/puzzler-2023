@@ -60,6 +60,24 @@ class TokenizerTest {
         );
     }
 
+    @Test
+    void givenKeywordsWithNoSpaces_whenTokenizing_thenTokensReturned() throws IOException {
+        assertEquals(
+            List.of(
+                new Token("100", Token.Type.NUMBER),
+                new Token("PRINT", Token.Type.KEYWORD),
+                new Token("IF", Token.Type.KEYWORD),
+                new Token("THEN", Token.Type.KEYWORD),
+                new Token("GOTO", Token.Type.KEYWORD),
+                new Token("HELLO WORLD", Token.Type.STRING),
+                new Token(null, Token.Type.EOF)
+            ),
+            tokenize(
+                "100PRINTIFTHENGOTO\"HELLO WORLD\""
+            )
+        );
+    }
+
     private List<Token> tokenize(String code) throws IOException {
         List<Token> tokens = new ArrayList<>();
         Tokenizer tokenizer = new Tokenizer(new StringReader(code));

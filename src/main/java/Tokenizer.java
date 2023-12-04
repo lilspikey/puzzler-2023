@@ -3,6 +3,7 @@ import java.io.PushbackReader;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -47,7 +48,10 @@ public class Tokenizer {
             }
             if (isUppercaseAlphabetic(c)) {
                 reader.unread(c);
-                String text = consumeAllMatching(this::isUppercaseAlphabetic);
+                String text = consumeAllMatching(
+                    this::isUppercaseAlphabetic,
+                    builder -> isKeyword(builder.toString())
+                );
                 if (keywordMapping.containsKey(text)) {
                     return new Token(text, Token.Type.KEYWORD);
                 }
@@ -74,17 +78,28 @@ public class Tokenizer {
     }
 
     private String consumeAllMatching(Predicate<Character> test) throws IOException {
+        return consumeAllMatching(test, s -> false);
+    }
+
+    private String consumeAllMatching(Predicate<Character> charTest, Predicate<StringBuilder> tokenTest) throws IOException {
         StringBuilder builder = new StringBuilder();
         while (true) {
             int c = reader.read();
-            if (c != -1 && test.test((char) c)) {
+            if (c != -1 && charTest.test((char) c)) {
                 builder.append((char) c);
             } else {
                 reader.unread(c);
                 break;
             }
+            if (tokenTest.test(builder)) {
+                break;
+            }
         }
         return builder.toString();
+    }
+
+    private boolean isKeyword(String text) {
+        return keywordMapping.containsKey(text);
     }
 
     private boolean isUppercaseAlphabetic(int c) {
