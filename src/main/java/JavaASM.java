@@ -6,6 +6,7 @@ import ast.FloatInput;
 import ast.FloatMultiplication;
 import ast.FloatVariable;
 import ast.GotoStatement;
+import ast.IfStatement;
 import ast.PrintStatement;
 import ast.Statement;
 import ast.StringConstant;
@@ -27,14 +28,18 @@ import java.util.function.Consumer;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM4;
 import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.F2I;
 import static org.objectweb.asm.Opcodes.FADD;
 import static org.objectweb.asm.Opcodes.FLOAD;
 import static org.objectweb.asm.Opcodes.FMUL;
 import static org.objectweb.asm.Opcodes.FSTORE;
 import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.IF_ICMPGE;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.NOP;
 
 public class JavaASM implements AstVisitor {
     private String className;
@@ -130,6 +135,21 @@ public class JavaASM implements AstVisitor {
     }
 
     @Override
+    public void visit(IfStatement statement) {
+        addCallback(statement, methodVisitor -> {
+            var falseLabel = new Label();
+            statement.predicate().visit(this);
+            methodVisitor.visitInsn(F2I);
+            methodVisitor.visitJumpInsn(IFEQ, falseLabel);
+            for (var s: statement.trueStatements()) {
+                s.visit(this);
+            }
+            methodVisitor.visitLabel(falseLabel);
+            methodVisitor.visitInsn(NOP);
+        });
+    }
+
+    @Override
     public void visit(FloatInput statement) {
         var index = getLocalFloatVarIndex(statement.name());
         addCallback(statement, methodVisitor -> {
@@ -183,12 +203,17 @@ public class JavaASM implements AstVisitor {
 
     private void addCallback(Statement statement, Consumer<MethodVisitor> callback) {
         var label = createLineLabel(statement);
-        methodCallbacks.add(methodVisitor -> {
+        Consumer<MethodVisitor> methodCallback = methodVisitor -> {
             if (label != null) {
                 methodVisitor.visitLabel(label);
             }
             callback.accept(methodVisitor);
-        });
+        };
+        if (currentMethodVisitor == null) {
+            methodCallbacks.add(methodCallback);
+        } else {
+            methodCallback.accept(currentMethodVisitor);
+        }
     }
 
     private Label createLineLabel(Statement statement) {

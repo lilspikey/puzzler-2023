@@ -6,6 +6,7 @@ import ast.FloatInput;
 import ast.FloatMultiplication;
 import ast.FloatVariable;
 import ast.GotoStatement;
+import ast.IfStatement;
 import ast.PrintStatement;
 import ast.Statement;
 import ast.StringConstant;
@@ -27,6 +28,22 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(GotoStatement statement) {
         System.out.println(lineLabelPrefix(statement) + " GOTO " + statement.destinationLabel());
+    }
+
+    @Override
+    public void visit(IfStatement statement) {
+        System.out.print(lineLabelPrefix(statement) + " IF ");
+        statement.predicate().visit(this);
+        System.out.print(" THEN ");
+        var first = true;
+        for (var s: statement.trueStatements()) {
+            s.visit(this);
+            if (!first) {
+                System.out.print(':');
+            }
+            first = false;
+        }
+        System.out.println();
     }
 
     @Override

@@ -5,6 +5,8 @@ public interface AstVisitor {
 
     void visit(GotoStatement statement);
 
+    void visit(IfStatement statement);
+
     void visit(FloatAssignment statement);
 
     void visit(FloatInput statement);

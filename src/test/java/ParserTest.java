@@ -4,6 +4,7 @@ import ast.FloatConstant;
 import ast.FloatMultiplication;
 import ast.FloatVariable;
 import ast.GotoStatement;
+import ast.IfStatement;
 import ast.PrintStatement;
 import ast.Program;
 import ast.StringConstant;
@@ -128,6 +129,26 @@ class ParserTest {
                                 new FloatConstant(3.0f), new FloatConstant(2.0f)
                             )
                         )
+                    )
+                )
+            ),
+            program
+        );
+    }
+
+    @Test
+    public void givenIfWithLabel_whenParsing_thenProgramReturned() throws IOException {
+        Parser parser = new Parser();
+        Program program = parser.parse(new StringReader(
+            "100 A = 2\n" +
+            "200 IF A THEN 100"
+        ));
+        assertEquals(
+            new Program(
+                List.of(
+                    new FloatAssignment("100", "A", new FloatConstant(2.0f)),
+                    new IfStatement("200", new FloatVariable("A"),
+                        List.of(new GotoStatement(null, "100"))
                     )
                 )
             ),

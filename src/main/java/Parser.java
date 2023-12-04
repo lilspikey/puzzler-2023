@@ -7,6 +7,7 @@ import ast.FloatInput;
 import ast.FloatMultiplication;
 import ast.FloatVariable;
 import ast.GotoStatement;
+import ast.IfStatement;
 import ast.PrintStatement;
 import ast.Program;
 import ast.Statement;
@@ -15,6 +16,7 @@ import ast.StringConstant;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class Parser {
@@ -47,7 +49,9 @@ public class Parser {
             statement = switch (first.asKeyword()) {
                 case PRINT -> nextPrintStatement(label, tokenizer);
                 case GOTO -> nextGotoStatement(label, tokenizer);
+                case IF -> nextIfStatement(label, tokenizer);
                 case INPUT -> nextInputStatement(label, tokenizer);
+                case THEN -> throw new IllegalStateException("Unexpected token:" + first);
             };
         } else if (first.type() == Token.Type.NAME) {
             statement = nextFloatAssignment(label, tokenizer);
@@ -116,6 +120,15 @@ public class Parser {
         nextExpectedKeyword(tokenizer, Keyword.GOTO);
         var destinationLabel = nextExpectedNumber(tokenizer);
         return new GotoStatement(label, destinationLabel.text());
+    }
+
+    private IfStatement nextIfStatement(String label, Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.IF);
+        var predicate = nextExpression(tokenizer);
+        nextExpectedKeyword(tokenizer, Keyword.THEN);
+        var destinationLabel = nextExpectedNumber(tokenizer);
+        // TODO support the more complex type of if
+        return new IfStatement(label, predicate, List.of(new GotoStatement(null, destinationLabel.text())));
     }
 
     private FloatInput nextInputStatement(String label, Tokenizer tokenizer) throws IOException {
