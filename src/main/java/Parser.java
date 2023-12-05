@@ -5,6 +5,7 @@ import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatInput;
 import ast.FloatMultiplication;
+import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.IfStatement;
@@ -22,6 +23,7 @@ import java.util.Map;
 public class Parser {
     private final Map<String, Integer> operatorPrecedence = Map.of(
         "+", 1,
+        "-", 1,
         "*", 2
     );
 
@@ -96,6 +98,7 @@ public class Parser {
                 var rhs = nextExpression(tokenizer, precedence + 1);
                 lhs = switch (maybeOp.text()) {
                     case "+" -> new FloatAddition(lhs, rhs);
+                    case "-" -> new FloatSubtraction(lhs, rhs);
                     case "*" -> new FloatMultiplication(lhs, rhs);
                     default -> throw new IllegalStateException("Unknown operator: " + maybeOp.text());
                 };

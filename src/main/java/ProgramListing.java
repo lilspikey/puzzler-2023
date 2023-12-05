@@ -4,6 +4,7 @@ import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatInput;
 import ast.FloatMultiplication;
+import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.IfStatement;
@@ -78,6 +79,15 @@ public class ProgramListing implements AstVisitor {
         System.out.print("(");
         expression.lhs().visit(this);
         System.out.print("+");
+        expression.rhs().visit(this);
+        System.out.print(")");
+    }
+
+    @Override
+    public void visit(FloatSubtraction expression) {
+        System.out.print("(");
+        expression.lhs().visit(this);
+        System.out.print("-");
         expression.rhs().visit(this);
         System.out.print(")");
     }

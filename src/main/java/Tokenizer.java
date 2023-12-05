@@ -111,7 +111,7 @@ public class Tokenizer {
     }
 
     private boolean isSymbol(int c) {
-        return c == '=' || c == '+' || c == '*';
+        return c == '=' || c == '+' || c == '*' || c == '-';
     }
 
 }
