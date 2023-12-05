@@ -2,6 +2,7 @@ import ast.FloatAddition;
 import ast.AstVisitor;
 import ast.FloatAssignment;
 import ast.FloatConstant;
+import ast.FloatDivision;
 import ast.FloatInput;
 import ast.FloatMultiplication;
 import ast.FloatSubtraction;
@@ -97,6 +98,15 @@ public class ProgramListing implements AstVisitor {
         System.out.print("(");
         expression.lhs().visit(this);
         System.out.print("*");
+        expression.rhs().visit(this);
+        System.out.print(")");
+    }
+
+    @Override
+    public void visit(FloatDivision expression) {
+        System.out.print("(");
+        expression.lhs().visit(this);
+        System.out.print("/");
         expression.rhs().visit(this);
         System.out.print(")");
     }

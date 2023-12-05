@@ -22,4 +22,6 @@ public interface AstVisitor {
     void visit(FloatSubtraction expression);
 
     void visit(FloatMultiplication expression);
+
+    void visit(FloatDivision expression);
 }

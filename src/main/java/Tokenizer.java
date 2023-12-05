@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class Tokenizer {
+    private static final String SYMBOL_CHARS = "=+-*/";
     private final Map<String, Keyword> keywordMapping = Arrays.stream(Keyword.values())
         .collect(Collectors.toMap(String::valueOf, Function.identity()));
     private final PushbackReader reader;
@@ -111,7 +112,7 @@ public class Tokenizer {
     }
 
     private boolean isSymbol(int c) {
-        return c == '=' || c == '+' || c == '*' || c == '-';
+        return SYMBOL_CHARS.indexOf(c) != -1;
     }
 
 }

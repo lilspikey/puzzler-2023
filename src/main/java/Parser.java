@@ -3,6 +3,7 @@ import ast.Expression;
 import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
+import ast.FloatDivision;
 import ast.FloatInput;
 import ast.FloatMultiplication;
 import ast.FloatSubtraction;
@@ -24,7 +25,8 @@ public class Parser {
     private final Map<String, Integer> operatorPrecedence = Map.of(
         "+", 1,
         "-", 1,
-        "*", 2
+        "*", 2,
+        "/", 2
     );
 
     public Program parse(Reader source) throws IOException {
@@ -100,6 +102,7 @@ public class Parser {
                     case "+" -> new FloatAddition(lhs, rhs);
                     case "-" -> new FloatSubtraction(lhs, rhs);
                     case "*" -> new FloatMultiplication(lhs, rhs);
+                    case "/" -> new FloatDivision(lhs, rhs);
                     default -> throw new IllegalStateException("Unknown operator: " + maybeOp.text());
                 };
             } else {

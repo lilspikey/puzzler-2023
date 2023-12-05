@@ -2,6 +2,7 @@ import ast.AstVisitor;
 import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
+import ast.FloatDivision;
 import ast.FloatInput;
 import ast.FloatMultiplication;
 import ast.FloatSubtraction;
@@ -31,6 +32,7 @@ import static org.objectweb.asm.Opcodes.ASM4;
 import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.F2I;
 import static org.objectweb.asm.Opcodes.FADD;
+import static org.objectweb.asm.Opcodes.FDIV;
 import static org.objectweb.asm.Opcodes.FLOAD;
 import static org.objectweb.asm.Opcodes.FMUL;
 import static org.objectweb.asm.Opcodes.FSTORE;
@@ -207,6 +209,13 @@ public class JavaASM implements AstVisitor {
         expression.lhs().visit(this);
         expression.rhs().visit(this);
         currentMethodVisitor.visitInsn(FMUL);
+    }
+
+    @Override
+    public void visit(FloatDivision expression) {
+        expression.lhs().visit(this);
+        expression.rhs().visit(this);
+        currentMethodVisitor.visitInsn(FDIV);
     }
 
     private void addCallback(Statement statement, Consumer<MethodVisitor> callback) {
