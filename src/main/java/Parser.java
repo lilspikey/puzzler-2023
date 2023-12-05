@@ -1,3 +1,4 @@
+import ast.BinaryExpression;
 import ast.DataType;
 import ast.Expression;
 import ast.FloatAddition;
@@ -20,13 +21,14 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 public class Parser {
-    private final Map<String, Integer> operatorPrecedence = Map.of(
-        "+", 1,
-        "-", 1,
-        "*", 2,
-        "/", 2
+    private final Map<String, OperatorInfo> operators = Map.of(
+        "+", new OperatorInfo(1, FloatAddition::new),
+        "-", new OperatorInfo(1, FloatSubtraction::new),
+        "*", new OperatorInfo(2, FloatMultiplication::new),
+        "/", new OperatorInfo(2, FloatDivision::new)
     );
 
     public Program parse(Reader source) throws IOException {
@@ -91,20 +93,14 @@ public class Parser {
         var lhs = nextAtomExpression(tokenizer);
         while (true) {
             var maybeOp = tokenizer.peek();
-            if (maybeOp.type() == Token.Type.SYMBOL && operatorPrecedence.containsKey(maybeOp.text())) {
-                var precedence = operatorPrecedence.get(maybeOp.text());
-                if (precedence < minPrecedence) {
+            if (maybeOp.type() == Token.Type.SYMBOL && operators.containsKey(maybeOp.text())) {
+                var operatorInfo = operators.get(maybeOp.text());
+                if (operatorInfo.precedence() < minPrecedence) {
                     break;
                 }
                 nextExpectedSymbol(tokenizer);
-                var rhs = nextExpression(tokenizer, precedence + 1);
-                lhs = switch (maybeOp.text()) {
-                    case "+" -> new FloatAddition(lhs, rhs);
-                    case "-" -> new FloatSubtraction(lhs, rhs);
-                    case "*" -> new FloatMultiplication(lhs, rhs);
-                    case "/" -> new FloatDivision(lhs, rhs);
-                    default -> throw new IllegalStateException("Unknown operator: " + maybeOp.text());
-                };
+                var rhs = nextExpression(tokenizer, operatorInfo.precedence() + 1);
+                lhs = operatorInfo.newOperator.apply(lhs, rhs);
             } else {
                 break;
             }
@@ -190,5 +186,9 @@ public class Parser {
             throw new IllegalStateException("Expected " + expected +" got: " + token);
         }
         return token;
+    }
+
+    record OperatorInfo(int precedence, BiFunction<Expression, Expression, BinaryExpression> newOperator) {
+
     }
 }

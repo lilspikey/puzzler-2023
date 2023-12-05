@@ -1,6 +1,6 @@
 package ast;
 
-public record FloatMultiplication(Expression lhs, Expression rhs) implements Expression {
+public record FloatMultiplication(Expression lhs, Expression rhs) implements BinaryExpression {
     @Override
     public DataType getDataType() {
         return DataType.FLOAT;

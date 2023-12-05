@@ -1,4 +1,5 @@
 import ast.AstVisitor;
+import ast.BinaryExpression;
 import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
@@ -192,30 +193,31 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(FloatAddition expression) {
-        expression.lhs().visit(this);
-        expression.rhs().visit(this);
+        visitExpressions(expression);
         currentMethodVisitor.visitInsn(FADD);
     }
 
     @Override
     public void visit(FloatSubtraction expression) {
-        expression.lhs().visit(this);
-        expression.rhs().visit(this);
+        visitExpressions(expression);
         currentMethodVisitor.visitInsn(FSUB);
     }
 
     @Override
     public void visit(FloatMultiplication expression) {
-        expression.lhs().visit(this);
-        expression.rhs().visit(this);
+        visitExpressions(expression);
         currentMethodVisitor.visitInsn(FMUL);
     }
 
     @Override
     public void visit(FloatDivision expression) {
+        visitExpressions(expression);
+        currentMethodVisitor.visitInsn(FDIV);
+    }
+
+    private void visitExpressions(BinaryExpression expression) {
         expression.lhs().visit(this);
         expression.rhs().visit(this);
-        currentMethodVisitor.visitInsn(FDIV);
     }
 
     private void addCallback(Statement statement, Consumer<MethodVisitor> callback) {

@@ -1,5 +1,6 @@
-import ast.FloatAddition;
 import ast.AstVisitor;
+import ast.BinaryExpression;
+import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
@@ -77,36 +78,28 @@ public class ProgramListing implements AstVisitor {
 
     @Override
     public void visit(FloatAddition expression) {
-        System.out.print("(");
-        expression.lhs().visit(this);
-        System.out.print("+");
-        expression.rhs().visit(this);
-        System.out.print(")");
+        binaryExpression("+", expression);
     }
 
     @Override
     public void visit(FloatSubtraction expression) {
-        System.out.print("(");
-        expression.lhs().visit(this);
-        System.out.print("-");
-        expression.rhs().visit(this);
-        System.out.print(")");
+        binaryExpression("-", expression);
     }
 
     @Override
     public void visit(FloatMultiplication expression) {
-        System.out.print("(");
-        expression.lhs().visit(this);
-        System.out.print("*");
-        expression.rhs().visit(this);
-        System.out.print(")");
+        binaryExpression("*", expression);
     }
 
     @Override
     public void visit(FloatDivision expression) {
+        binaryExpression("/", expression);
+    }
+
+    private void binaryExpression(String operator, BinaryExpression expression) {
         System.out.print("(");
         expression.lhs().visit(this);
-        System.out.print("/");
+        System.out.print(operator);
         expression.rhs().visit(this);
         System.out.print(")");
     }
