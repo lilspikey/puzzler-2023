@@ -17,6 +17,8 @@ public interface AstVisitor {
 
     void visit(FloatVariable expression);
 
+    void visit(FloatEquality expression);
+
     void visit(FloatAddition expression);
 
     void visit(FloatSubtraction expression);

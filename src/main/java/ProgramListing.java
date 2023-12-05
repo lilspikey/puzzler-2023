@@ -4,6 +4,7 @@ import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
+import ast.FloatEquality;
 import ast.FloatInput;
 import ast.FloatMultiplication;
 import ast.FloatSubtraction;
@@ -74,6 +75,11 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(FloatVariable expression) {
         System.out.print(expression.name());
+    }
+
+    @Override
+    public void visit(FloatEquality expression) {
+        binaryExpression("=", expression);
     }
 
     @Override

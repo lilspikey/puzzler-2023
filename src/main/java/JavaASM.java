@@ -4,6 +4,7 @@ import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
+import ast.FloatEquality;
 import ast.FloatInput;
 import ast.FloatMultiplication;
 import ast.FloatSubtraction;
@@ -33,12 +34,14 @@ import static org.objectweb.asm.Opcodes.ASM4;
 import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.F2I;
 import static org.objectweb.asm.Opcodes.FADD;
+import static org.objectweb.asm.Opcodes.FCMPG;
 import static org.objectweb.asm.Opcodes.FDIV;
 import static org.objectweb.asm.Opcodes.FLOAD;
 import static org.objectweb.asm.Opcodes.FMUL;
 import static org.objectweb.asm.Opcodes.FSTORE;
 import static org.objectweb.asm.Opcodes.FSUB;
 import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.I2F;
 import static org.objectweb.asm.Opcodes.IFEQ;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
@@ -189,6 +192,16 @@ public class JavaASM implements AstVisitor {
     public void visit(FloatVariable expression) {
         var index = getLocalFloatVarIndex(expression.name());
         currentMethodVisitor.visitVarInsn(FLOAD, index);
+    }
+
+    @Override
+    public void visit(FloatEquality expression) {
+        visitExpressions(expression);
+        currentMethodVisitor.visitInsn(FCMPG);
+        // bit inefficient here, as we're going from int -> float -> int
+        // for if statements, but the expression on it's own is meant to evaluate
+        // to a float (though this does -1, 0, 1, but spec is apparently just -1 or 0
+        currentMethodVisitor.visitInsn(I2F);
     }
 
     @Override

@@ -5,6 +5,7 @@ import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
+import ast.FloatEquality;
 import ast.FloatInput;
 import ast.FloatMultiplication;
 import ast.FloatSubtraction;
@@ -25,10 +26,11 @@ import java.util.function.BiFunction;
 
 public class Parser {
     private final Map<String, OperatorInfo> operators = Map.of(
-        "+", new OperatorInfo(1, FloatAddition::new),
-        "-", new OperatorInfo(1, FloatSubtraction::new),
-        "*", new OperatorInfo(2, FloatMultiplication::new),
-        "/", new OperatorInfo(2, FloatDivision::new)
+        "=", new OperatorInfo(1, FloatEquality::new),
+        "+", new OperatorInfo(2, FloatAddition::new),
+        "-", new OperatorInfo(2, FloatSubtraction::new),
+        "*", new OperatorInfo(3, FloatMultiplication::new),
+        "/", new OperatorInfo(4, FloatDivision::new)
     );
 
     public Program parse(Reader source) throws IOException {
