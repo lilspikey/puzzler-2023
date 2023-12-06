@@ -5,6 +5,7 @@ import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatEquality;
+import ast.FloatGreaterThan;
 import ast.FloatInput;
 import ast.FloatMultiplication;
 import ast.FloatSubtraction;
@@ -43,6 +44,7 @@ import static org.objectweb.asm.Opcodes.FSTORE;
 import static org.objectweb.asm.Opcodes.FSUB;
 import static org.objectweb.asm.Opcodes.GOTO;
 import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.IFGT;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.NEW;
@@ -200,10 +202,16 @@ public class JavaASM implements AstVisitor {
         floatComparison(IFEQ);
     }
 
+    @Override
+    public void visit(FloatGreaterThan expression) {
+        visitExpressions(expression);
+        floatComparison(IFGT);
+    }
+
     private void floatComparison(int opcode) {
         currentMethodVisitor.visitInsn(FCMPG);
         // spec wants 0 for true and -1 for false
-        // using IFEQ and GOTO like this seems to be
+        // using IF* and GOTO like this seems to be
         // pretty much what Java itself uses for boolean expressions
         var trueLabel = new Label();
         var falseLabel = new Label();
