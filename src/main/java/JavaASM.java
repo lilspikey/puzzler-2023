@@ -35,13 +35,13 @@ import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.F2I;
 import static org.objectweb.asm.Opcodes.FADD;
 import static org.objectweb.asm.Opcodes.FCMPG;
+import static org.objectweb.asm.Opcodes.FCONST_0;
 import static org.objectweb.asm.Opcodes.FDIV;
 import static org.objectweb.asm.Opcodes.FLOAD;
 import static org.objectweb.asm.Opcodes.FMUL;
 import static org.objectweb.asm.Opcodes.FSTORE;
 import static org.objectweb.asm.Opcodes.FSUB;
 import static org.objectweb.asm.Opcodes.GOTO;
-import static org.objectweb.asm.Opcodes.I2F;
 import static org.objectweb.asm.Opcodes.IFEQ;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
@@ -197,11 +197,23 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(FloatEquality expression) {
         visitExpressions(expression);
+        floatComparison(IFEQ);
+    }
+
+    private void floatComparison(int opcode) {
         currentMethodVisitor.visitInsn(FCMPG);
-        // bit inefficient here, as we're going from int -> float -> int
-        // for if statements, but the expression on it's own is meant to evaluate
-        // to a float (though this does -1, 0, 1, but spec is apparently just -1 or 0
-        currentMethodVisitor.visitInsn(I2F);
+        // spec wants 0 for true and -1 for false
+        // using IFEQ and GOTO like this seems to be
+        // pretty much what Java itself uses for boolean expressions
+        var trueLabel = new Label();
+        var falseLabel = new Label();
+        currentMethodVisitor.visitJumpInsn(opcode, trueLabel);
+        currentMethodVisitor.visitLdcInsn(-1.0f);
+        currentMethodVisitor.visitJumpInsn(GOTO, falseLabel);
+        currentMethodVisitor.visitLabel(trueLabel);
+        currentMethodVisitor.visitInsn(FCONST_0);
+        currentMethodVisitor.visitLabel(falseLabel);
+        currentMethodVisitor.visitInsn(NOP);
     }
 
     @Override
