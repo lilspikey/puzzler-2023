@@ -8,6 +8,8 @@ import ast.FloatEquality;
 import ast.FloatGreaterThan;
 import ast.FloatGreaterThanEquals;
 import ast.FloatInput;
+import ast.FloatLessThan;
+import ast.FloatLessThanEquals;
 import ast.FloatMultiplication;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
@@ -47,6 +49,8 @@ import static org.objectweb.asm.Opcodes.GOTO;
 import static org.objectweb.asm.Opcodes.IFEQ;
 import static org.objectweb.asm.Opcodes.IFGE;
 import static org.objectweb.asm.Opcodes.IFGT;
+import static org.objectweb.asm.Opcodes.IFLE;
+import static org.objectweb.asm.Opcodes.IFLT;
 import static org.objectweb.asm.Opcodes.IFNE;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
@@ -216,6 +220,18 @@ public class JavaASM implements AstVisitor {
     public void visit(FloatGreaterThanEquals expression) {
         visitExpressions(expression);
         floatComparison(IFGE);
+    }
+
+    @Override
+    public void visit(FloatLessThan expression) {
+        visitExpressions(expression);
+        floatComparison(IFLT);
+    }
+
+    @Override
+    public void visit(FloatLessThanEquals expression) {
+        visitExpressions(expression);
+        floatComparison(IFLE);
     }
 
     private void floatComparison(int opcode) {

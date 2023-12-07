@@ -23,6 +23,10 @@ public interface AstVisitor {
 
     void visit(FloatGreaterThanEquals expression);
 
+    void visit(FloatLessThan expression);
+
+    void visit(FloatLessThanEquals expression);
+
     void visit(FloatAddition expression);
 
     void visit(FloatSubtraction expression);

@@ -9,6 +9,8 @@ import ast.FloatEquality;
 import ast.FloatGreaterThan;
 import ast.FloatGreaterThanEquals;
 import ast.FloatInput;
+import ast.FloatLessThan;
+import ast.FloatLessThanEquals;
 import ast.FloatMultiplication;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
@@ -31,6 +33,8 @@ public class Parser {
         "=", new OperatorInfo(1, FloatEquality::new),
         ">", new OperatorInfo(1, FloatGreaterThan::new),
         ">=", new OperatorInfo(1, FloatGreaterThanEquals::new),
+        "<", new OperatorInfo(1, FloatLessThan::new),
+        "<=", new OperatorInfo(1, FloatLessThanEquals::new),
         "+", new OperatorInfo(2, FloatAddition::new),
         "-", new OperatorInfo(2, FloatSubtraction::new),
         "*", new OperatorInfo(3, FloatMultiplication::new),
