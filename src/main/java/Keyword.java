@@ -3,5 +3,6 @@ public enum Keyword {
     GOTO,
     IF,
     THEN,
-    INPUT
+    INPUT,
+    REM
 }

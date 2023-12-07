@@ -18,6 +18,7 @@ import ast.GotoStatement;
 import ast.IfStatement;
 import ast.PrintStatement;
 import ast.Program;
+import ast.RemarkStatement;
 import ast.Statement;
 import ast.StringConstant;
 
@@ -67,6 +68,7 @@ public class Parser {
                 case GOTO -> nextGotoStatement(label, tokenizer);
                 case IF -> nextIfStatement(label, tokenizer);
                 case INPUT -> nextInputStatement(label, tokenizer);
+                case REM -> nextComment(label, tokenizer);
                 case THEN -> throw new IllegalStateException("Unexpected token:" + first);
             };
         } else if (first.type() == Token.Type.NAME) {
@@ -80,6 +82,11 @@ public class Parser {
             tokenizer.next();
         }
         return statement;
+    }
+
+    private RemarkStatement nextComment(String label, Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.REM);
+        return new RemarkStatement(label, tokenizer.readTillEndOfLine());
     }
 
     private PrintStatement nextPrintStatement(String label, Tokenizer tokenizer) throws IOException {

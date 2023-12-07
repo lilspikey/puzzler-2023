@@ -77,6 +77,10 @@ public class Tokenizer {
         }
     }
 
+    public String readTillEndOfLine() throws IOException {
+        return consumeAllMatching(c -> c != '\n');
+    }
+
     private String consumeAllMatching(Predicate<Character> test) throws IOException {
         return consumeAllMatching(test, s -> false);
     }

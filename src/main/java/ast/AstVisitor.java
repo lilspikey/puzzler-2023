@@ -7,6 +7,10 @@ public interface AstVisitor {
 
     void visit(IfStatement statement);
 
+    default void visit(RemarkStatement statement) {
+        // noop
+    }
+
     void visit(FloatAssignment statement);
 
     void visit(FloatInput statement);
