@@ -1,6 +1,6 @@
 package ast;
 
-public record FloatEquality(Expression lhs, Expression rhs) implements BinaryExpression {
+public record FloatNotEquals(Expression lhs, Expression rhs) implements BinaryExpression {
     @Override
     public DataType getDataType() {
         return DataType.FLOAT;

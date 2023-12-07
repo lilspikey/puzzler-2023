@@ -21,7 +21,9 @@ public interface AstVisitor {
 
     void visit(FloatVariable expression);
 
-    void visit(FloatEquality expression);
+    void visit(FloatEquals expression);
+
+    void visit(FloatNotEquals expression);
 
     void visit(FloatGreaterThan expression);
 

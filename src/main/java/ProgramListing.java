@@ -4,13 +4,14 @@ import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
-import ast.FloatEquality;
+import ast.FloatEquals;
 import ast.FloatGreaterThan;
 import ast.FloatGreaterThanEquals;
 import ast.FloatInput;
 import ast.FloatLessThan;
 import ast.FloatLessThanEquals;
 import ast.FloatMultiplication;
+import ast.FloatNotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.GotoStatement;
@@ -88,8 +89,13 @@ public class ProgramListing implements AstVisitor {
     }
 
     @Override
-    public void visit(FloatEquality expression) {
+    public void visit(FloatEquals expression) {
         binaryExpression("=", expression);
+    }
+
+    @Override
+    public void visit(FloatNotEquals expression) {
+        binaryExpression("<>", expression);
     }
 
     @Override

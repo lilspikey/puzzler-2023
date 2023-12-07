@@ -5,13 +5,14 @@ import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
-import ast.FloatEquality;
+import ast.FloatEquals;
 import ast.FloatGreaterThan;
 import ast.FloatGreaterThanEquals;
 import ast.FloatInput;
 import ast.FloatLessThan;
 import ast.FloatLessThanEquals;
 import ast.FloatMultiplication;
+import ast.FloatNotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.GotoStatement;
@@ -31,7 +32,8 @@ import java.util.function.BiFunction;
 
 public class Parser {
     private final Map<String, OperatorInfo> operators = Map.of(
-        "=", new OperatorInfo(1, FloatEquality::new),
+        "=", new OperatorInfo(1, FloatEquals::new),
+        "<>", new OperatorInfo(1, FloatNotEquals::new),
         ">", new OperatorInfo(1, FloatGreaterThan::new),
         ">=", new OperatorInfo(1, FloatGreaterThanEquals::new),
         "<", new OperatorInfo(1, FloatLessThan::new),
