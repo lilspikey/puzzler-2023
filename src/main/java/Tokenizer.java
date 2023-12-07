@@ -67,9 +67,9 @@ public class Tokenizer {
                 }
                 return new Token(text, Token.Type.NAME);
             }
-            if (isDigit(c)) {
+            if (isNumeric(c)) {
                 reader.unread(c);
-                String text = consumeAllMatching(this::isDigit);
+                String text = consumeAllMatching(this::isNumeric);
                 return new Token(text, Token.Type.NUMBER);
             }
             if (isSymbol(c)) {
@@ -134,8 +134,8 @@ public class Tokenizer {
         return 'A' <= c && c <= 'Z';
     }
 
-    private boolean isDigit(int c) {
-        return '0' <= c && c <= '9';
+    private boolean isNumeric(int c) {
+        return '0' <= c && c <= '9' || c == '.';
     }
 
     private boolean isSymbol(int c) {
