@@ -156,4 +156,29 @@ class ParserTest {
         );
     }
 
+    @Test
+    public void givenComplexExpression_whenParsing_thenProgramReturned() throws IOException {
+        Parser parser = new Parser();
+        Program program = parser.parse(new StringReader(
+            "100 A = (1 + 2) * 4 + 1 + 2"
+        ));
+        assertEquals(
+            new Program(
+                List.of(
+                    new FloatAssignment("100", "A", new FloatAddition(
+                        new FloatAddition(
+                            new FloatMultiplication(
+                                new FloatAddition(new FloatConstant(1.0f), new FloatConstant(2.0f)),
+                                new FloatConstant(4.0f)
+                            ),
+                            new FloatConstant(1.0f)
+                        ),
+                        new FloatConstant(2.0f)
+                    ))
+                )
+            ),
+            program
+        );
+    }
+
 }

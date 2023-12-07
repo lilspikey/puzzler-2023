@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 
 public class Tokenizer {
     private static final Set<String> SYMBOLS = Set.of(
-        "=", "<>", "<", "<=", ">", ">=", "+", "-", "*", "/"
+        "=", "<>", "<", "<=", ">", ">=", "+", "-", "*", "/", "(", ")"
     );
     private static final String SYMBOL_CHARS = SYMBOLS.stream()
             .map(String::chars)

@@ -128,13 +128,26 @@ public class Parser {
     }
 
     private Expression nextAtomExpression(Tokenizer tokenizer) throws IOException {
-        var token = tokenizer.next();
+        var token = tokenizer.peek();
         return switch (token.type()) {
-            case STRING -> new StringConstant(token.text());
-            case NUMBER -> new FloatConstant(Float.parseFloat(token.text()));
-            case NAME -> new FloatVariable(token.text());
+            case STRING -> new StringConstant(tokenizer.next().text());
+            case NUMBER -> new FloatConstant(Float.parseFloat(tokenizer.next().text()));
+            case NAME -> new FloatVariable(tokenizer.next().text());
+            case SYMBOL -> {
+                if ("(".equals(token.text())) {
+                    yield nextSubExpression(tokenizer);
+                }
+                throw new IllegalStateException("Unexpected token: " + tokenizer.peek());
+            }
             default -> throw new IllegalStateException("Unexpected token: " + tokenizer.peek());
         };
+    }
+
+    private Expression nextSubExpression(Tokenizer tokenizer) throws IOException {
+        nextExpectedSymbol(tokenizer, "(");
+        var expression = nextExpression(tokenizer);
+        nextExpectedSymbol(tokenizer, ")");
+        return expression;
     }
 
     private GotoStatement nextGotoStatement(String label, Tokenizer tokenizer) throws IOException {
