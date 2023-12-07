@@ -3,12 +3,22 @@ import java.io.PushbackReader;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Tokenizer {
-    private static final String SYMBOL_CHARS = "=<>+-*/";
+    private static final Set<String> SYMBOLS = Set.of(
+        "=", "<", "<=", ">", ">=", "+", "-", "*", "/"
+    );
+    private static final String SYMBOL_CHARS = SYMBOLS.stream()
+            .map(String::chars)
+            .flatMap(IntStream::boxed)
+            .distinct()
+            .map(ch -> String.valueOf((char) (int) ch))
+            .collect(Collectors.joining());
     private final Map<String, Keyword> keywordMapping = Arrays.stream(Keyword.values())
         .collect(Collectors.toMap(String::valueOf, Function.identity()));
     private final PushbackReader reader;
@@ -64,7 +74,7 @@ public class Tokenizer {
             }
             if (isSymbol(c)) {
                 reader.unread(c);
-                String text = consumeAllMatching(this::isSymbol);
+                String text = consumeSymbol();
                 return new Token(text, Token.Type.SYMBOL);
             }
             if (c == '\"') {
@@ -83,6 +93,20 @@ public class Tokenizer {
 
     private String consumeAllMatching(Predicate<Character> test) throws IOException {
         return consumeAllMatching(test, s -> false);
+    }
+
+    private String consumeSymbol() throws IOException {
+        StringBuilder builder = new StringBuilder();
+        while (true) {
+            int c = reader.read();
+            if (c != -1 && SYMBOLS.contains(builder.toString() + (char) c)) {
+                builder.append((char) c);
+            } else {
+                reader.unread(c);
+                break;
+            }
+        }
+        return builder.toString();
     }
 
     private String consumeAllMatching(Predicate<Character> charTest, Predicate<StringBuilder> tokenTest) throws IOException {

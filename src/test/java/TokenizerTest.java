@@ -78,6 +78,26 @@ class TokenizerTest {
         );
     }
 
+    @Test
+    void givenSymbolsWithNoSpaces_whenTokenizing_thenTokensReturned() throws IOException {
+        assertEquals(
+            List.of(
+                new Token("=", Token.Type.SYMBOL),
+                new Token("<=", Token.Type.SYMBOL),
+                new Token("<", Token.Type.SYMBOL),
+                new Token("-", Token.Type.SYMBOL),
+                new Token("+", Token.Type.SYMBOL),
+                new Token("/", Token.Type.SYMBOL),
+                new Token("*", Token.Type.SYMBOL),
+                new Token(">", Token.Type.SYMBOL),
+                new Token(">=", Token.Type.SYMBOL),
+                new Token("=", Token.Type.SYMBOL),
+                new Token(null, Token.Type.EOF)
+            ),
+            tokenize("=<=<-+/*>>==")
+        );
+    }
+
     private List<Token> tokenize(String code) throws IOException {
         List<Token> tokens = new ArrayList<>();
         Tokenizer tokenizer = new Tokenizer(new StringReader(code));
