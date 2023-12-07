@@ -6,6 +6,7 @@ import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatEquality;
 import ast.FloatGreaterThan;
+import ast.FloatGreaterThanEquals;
 import ast.FloatInput;
 import ast.FloatMultiplication;
 import ast.FloatSubtraction;
@@ -86,6 +87,11 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(FloatGreaterThan expression) {
         binaryExpression(">", expression);
+    }
+
+    @Override
+    public void visit(FloatGreaterThanEquals expression) {
+        binaryExpression(">=", expression);
     }
 
     @Override

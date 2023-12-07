@@ -7,6 +7,7 @@ import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatEquality;
 import ast.FloatGreaterThan;
+import ast.FloatGreaterThanEquals;
 import ast.FloatInput;
 import ast.FloatMultiplication;
 import ast.FloatSubtraction;
@@ -29,6 +30,7 @@ public class Parser {
     private final Map<String, OperatorInfo> operators = Map.of(
         "=", new OperatorInfo(1, FloatEquality::new),
         ">", new OperatorInfo(1, FloatGreaterThan::new),
+        ">=", new OperatorInfo(1, FloatGreaterThanEquals::new),
         "+", new OperatorInfo(2, FloatAddition::new),
         "-", new OperatorInfo(2, FloatSubtraction::new),
         "*", new OperatorInfo(3, FloatMultiplication::new),

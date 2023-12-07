@@ -6,6 +6,7 @@ import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatEquality;
 import ast.FloatGreaterThan;
+import ast.FloatGreaterThanEquals;
 import ast.FloatInput;
 import ast.FloatMultiplication;
 import ast.FloatSubtraction;
@@ -44,7 +45,9 @@ import static org.objectweb.asm.Opcodes.FSTORE;
 import static org.objectweb.asm.Opcodes.FSUB;
 import static org.objectweb.asm.Opcodes.GOTO;
 import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.IFGE;
 import static org.objectweb.asm.Opcodes.IFGT;
+import static org.objectweb.asm.Opcodes.IFNE;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.NEW;
@@ -149,7 +152,8 @@ public class JavaASM implements AstVisitor {
             var falseLabel = new Label();
             statement.predicate().visit(this);
             methodVisitor.visitInsn(F2I);
-            methodVisitor.visitJumpInsn(IFEQ, falseLabel);
+            // NB logic is inverted 0 = true and -1 = false
+            methodVisitor.visitJumpInsn(IFNE, falseLabel);
             for (var s: statement.trueStatements()) {
                 s.visit(this);
             }
@@ -206,6 +210,12 @@ public class JavaASM implements AstVisitor {
     public void visit(FloatGreaterThan expression) {
         visitExpressions(expression);
         floatComparison(IFGT);
+    }
+
+    @Override
+    public void visit(FloatGreaterThanEquals expression) {
+        visitExpressions(expression);
+        floatComparison(IFGE);
     }
 
     private void floatComparison(int opcode) {
