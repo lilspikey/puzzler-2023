@@ -67,11 +67,11 @@ public class Parser {
         if (first.type() == Token.Type.KEYWORD) {
             statement = switch (first.asKeyword()) {
                 case PRINT -> nextPrintStatement(label, tokenizer);
-                case GOTO -> nextGotoStatement(label, tokenizer);
+                case GO -> nextGotoStatement(label, tokenizer);
                 case IF -> nextIfStatement(label, tokenizer);
                 case INPUT -> nextInputStatement(label, tokenizer);
                 case REM -> nextComment(label, tokenizer);
-                case THEN -> throw new IllegalStateException("Unexpected token:" + first);
+                default -> throw new IllegalStateException("Unexpected token:" + first);
             };
         } else if (first.type() == Token.Type.NAME) {
             statement = nextFloatAssignment(label, tokenizer);
@@ -151,7 +151,8 @@ public class Parser {
     }
 
     private GotoStatement nextGotoStatement(String label, Tokenizer tokenizer) throws IOException {
-        nextExpectedKeyword(tokenizer, Keyword.GOTO);
+        nextExpectedKeyword(tokenizer, Keyword.GO);
+        nextExpectedKeyword(tokenizer, Keyword.TO);
         var destinationLabel = nextExpectedNumber(tokenizer);
         return new GotoStatement(label, destinationLabel.text());
     }

@@ -1,6 +1,7 @@
 public enum Keyword {
     PRINT,
-    GOTO,
+    GO,
+    TO,
     IF,
     THEN,
     INPUT,

@@ -33,7 +33,8 @@ class TokenizerTest {
                 new Token("HELLO WORLD", Token.Type.STRING),
                 new Token("\n", Token.Type.EOL),
                 new Token("200", Token.Type.NUMBER),
-                new Token("GOTO", Token.Type.KEYWORD),
+                new Token("GO", Token.Type.KEYWORD),
+                new Token("TO", Token.Type.KEYWORD),
                 new Token("100", Token.Type.NUMBER),
                 new Token(null, Token.Type.EOF)
             ),
@@ -68,7 +69,8 @@ class TokenizerTest {
                 new Token("PRINT", Token.Type.KEYWORD),
                 new Token("IF", Token.Type.KEYWORD),
                 new Token("THEN", Token.Type.KEYWORD),
-                new Token("GOTO", Token.Type.KEYWORD),
+                new Token("GO", Token.Type.KEYWORD),
+                new Token("TO", Token.Type.KEYWORD),
                 new Token("HELLO WORLD", Token.Type.STRING),
                 new Token(null, Token.Type.EOF)
             ),
