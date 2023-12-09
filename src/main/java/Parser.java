@@ -15,8 +15,10 @@ import ast.FloatMultiplication;
 import ast.FloatNotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
+import ast.ForStatement;
 import ast.GotoStatement;
 import ast.IfStatement;
+import ast.NextStatement;
 import ast.PrintStatement;
 import ast.Program;
 import ast.RemarkStatement;
@@ -71,6 +73,8 @@ public class Parser {
                 case IF -> nextIfStatement(label, tokenizer);
                 case INPUT -> nextInputStatement(label, tokenizer);
                 case REM -> nextComment(label, tokenizer);
+                case FOR -> nextForStatement(label, tokenizer);
+                case NEXT -> nextNextStatement(label, tokenizer);
                 default -> throw new IllegalStateException("Unexpected token:" + first);
             };
         } else if (first.type() == Token.Type.NAME) {
@@ -84,6 +88,30 @@ public class Parser {
             tokenizer.next();
         }
         return statement;
+    }
+
+    private ForStatement nextForStatement(String label, Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.FOR);
+        var varname = nextExpectedName(tokenizer).text();
+        nextExpectedSymbol(tokenizer, "=");
+        var start = nextExpression(tokenizer);
+        nextExpectedKeyword(tokenizer, Keyword.TO);
+        var end = nextExpression(tokenizer);
+        Expression step = null;
+        if (tokenizer.peek().type() == Token.Type.KEYWORD && tokenizer.peek().asKeyword() == Keyword.STEP) {
+            nextExpectedKeyword(tokenizer, Keyword.STEP);
+            step = nextExpression(tokenizer);
+        }
+        return new ForStatement(label, varname, start, end, step);
+    }
+
+    private NextStatement nextNextStatement(String label, Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.NEXT);
+        String varname = null;
+        if (tokenizer.peek().type() == Token.Type.NAME) {
+            varname = tokenizer.next().text();
+        }
+        return new NextStatement(label, varname);
     }
 
     private RemarkStatement nextComment(String label, Tokenizer tokenizer) throws IOException {

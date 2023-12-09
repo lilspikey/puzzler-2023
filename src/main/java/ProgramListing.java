@@ -14,8 +14,10 @@ import ast.FloatMultiplication;
 import ast.FloatNotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
+import ast.ForStatement;
 import ast.GotoStatement;
 import ast.IfStatement;
+import ast.NextStatement;
 import ast.PrintStatement;
 import ast.RemarkStatement;
 import ast.Statement;
@@ -71,6 +73,28 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(RemarkStatement statement) {
         System.out.println(lineLabelPrefix(statement) + " REM " + statement.comment());
+    }
+
+    @Override
+    public void visit(ForStatement statement) {
+        System.out.print(lineLabelPrefix(statement) + " FOR " + statement.varname() + " = ");
+        statement.start().visit(this);
+        System.out.print(" TO ");
+        statement.end().visit(this);
+        if (statement.increment() != null) {
+            System.out.print(" STEP ");
+            statement.increment().visit(this);
+        }
+        System.out.println();
+    }
+
+    @Override
+    public void visit(NextStatement statement) {
+        System.out.print(lineLabelPrefix(statement) + " NEXT");
+        if (statement.varname() != null) {
+            System.out.println(" " + statement.varname());
+        }
+        System.out.println();
     }
 
     @Override

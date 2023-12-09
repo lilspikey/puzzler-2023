@@ -5,5 +5,8 @@ public enum Keyword {
     IF,
     THEN,
     INPUT,
-    REM
+    REM,
+    FOR,
+    STEP,
+    NEXT
 }

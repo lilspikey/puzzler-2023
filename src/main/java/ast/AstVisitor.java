@@ -11,6 +11,10 @@ public interface AstVisitor {
         // noop
     }
 
+    void visit(ForStatement statement);
+
+    void visit(NextStatement statement);
+
     void visit(FloatAssignment statement);
 
     void visit(FloatInput statement);

@@ -14,8 +14,10 @@ import ast.FloatMultiplication;
 import ast.FloatNotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
+import ast.ForStatement;
 import ast.GotoStatement;
 import ast.IfStatement;
+import ast.NextStatement;
 import ast.PrintStatement;
 import ast.Statement;
 import ast.StringConstant;
@@ -27,7 +29,9 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +41,7 @@ import java.util.function.Consumer;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM4;
 import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.DUP2;
 import static org.objectweb.asm.Opcodes.F2I;
 import static org.objectweb.asm.Opcodes.FADD;
 import static org.objectweb.asm.Opcodes.FCMPG;
@@ -57,12 +62,14 @@ import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.NEW;
 import static org.objectweb.asm.Opcodes.NOP;
+import static org.objectweb.asm.Opcodes.POP2;
 
 public class JavaASM implements AstVisitor {
     private String className;
     private final AtomicInteger nextLocalVarIndex = new AtomicInteger(1);
     private final Map<String, Integer> localFloatVarIndexes = new HashMap<>();
     private final Map<String, Label> linesToLabels = new HashMap<>();
+    private final Deque<OpenForStatement> openForStatements = new ArrayDeque<>();
     private final List<Consumer<MethodVisitor>> methodCallbacks = new ArrayList<>();
     private MethodVisitor currentMethodVisitor;
 
@@ -165,6 +172,62 @@ public class JavaASM implements AstVisitor {
             methodVisitor.visitLabel(falseLabel);
             methodVisitor.visitInsn(NOP);
         });
+    }
+
+    @Override
+    public void visit(ForStatement statement) {
+        var continueLabel = new Label();
+        openForStatements.add(new OpenForStatement(statement, continueLabel));
+        var index = getLocalFloatVarIndex(statement.varname());
+        addCallback(statement, methodVisitor -> {
+            statement.start().visit(this);
+            methodVisitor.visitVarInsn(FSTORE, index);
+            // end + increment go on the stack, to be used by NEXT statement
+            statement.end().visit(this);
+            if (statement.increment() != null) {
+                statement.increment().visit(this);
+            } else {
+                methodVisitor.visitLdcInsn(1.0f);
+            }
+            methodVisitor.visitLabel(continueLabel);
+            methodVisitor.visitInsn(NOP);
+        });
+    }
+
+    @Override
+    public void visit(NextStatement statement) {
+        var openFor = findMatchingForStatement(statement);
+        addCallback(statement, methodVisitor -> {
+            var forStatement = openFor.forStatement();
+            // copy end + increment from stack
+            methodVisitor.visitInsn(DUP2);
+            // add increment
+            var varIndex = getLocalFloatVarIndex(forStatement.varname());
+            methodVisitor.visitVarInsn(FLOAD, varIndex);
+            methodVisitor.visitInsn(FADD);
+            methodVisitor.visitVarInsn(FSTORE, varIndex);
+            // then compare end with the loop variable
+            methodVisitor.visitVarInsn(FLOAD, varIndex);
+            methodVisitor.visitInsn(FCMPG);
+            methodVisitor.visitJumpInsn(IFGE, openFor.continueLabel());
+            // loop finished, so remove end + increment from the stack
+            methodVisitor.visitInsn(POP2);
+        });
+    }
+
+    private OpenForStatement findMatchingForStatement(NextStatement statement) {
+        if (statement.varname() == null) {
+            return openForStatements.pop();
+        }
+        var it = openForStatements.iterator();
+        while (it.hasNext()) {
+            var forStatement = it.next();
+            if (forStatement.forStatement.varname().equals(statement.varname())) {
+                it.remove();
+                return forStatement;
+            }
+        }
+        throw new IllegalStateException("Could not find matching FOR for: " + statement);
     }
 
     @Override
@@ -312,5 +375,8 @@ public class JavaASM implements AstVisitor {
 
     private int getLocalFloatVarIndex(String name) {
         return localFloatVarIndexes.computeIfAbsent(name, n -> nextLocalVarIndex.getAndIncrement());
+    }
+
+    record OpenForStatement(ForStatement forStatement, Label continueLabel) {
     }
 }
