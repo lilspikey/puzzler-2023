@@ -1,6 +1,12 @@
 package ast;
 
 public interface AstVisitor {
+    default void visit(Program program) {
+        for (var line: program.lines()) {
+            line.visit(this);
+        }
+    }
+
     void visit(Line line);
 
     void visit(PrintStatement statement);

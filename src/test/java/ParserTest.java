@@ -155,9 +155,8 @@ class ParserTest {
                 List.of(
                     new Line("100", List.of(new FloatAssignment("A", new FloatConstant(2.0f)))),
                     new Line("200", List.of(
-                        new IfStatement(new FloatVariable("A"),
-                            List.of(new GotoStatement("100"))
-                        )
+                        new IfStatement(new FloatVariable("A")),
+                        new GotoStatement("100")
                     ))
                 )
             ),

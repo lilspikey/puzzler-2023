@@ -33,8 +33,15 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(Line line) {
         System.out.print(line.label() + " ");
+        var separator = false;
         for (var statement: line.statements()) {
+            if (separator) {
+                System.out.print(" : ");
+            }
             statement.visit(this);
+            if (!separator && !(statement instanceof IfStatement)) {
+                separator = true;
+            }
         }
         System.out.println();
     }
@@ -58,14 +65,6 @@ public class ProgramListing implements AstVisitor {
         System.out.print("IF ");
         statement.predicate().visit(this);
         System.out.print(" THEN ");
-        var first = true;
-        for (var s: statement.trueStatements()) {
-            s.visit(this);
-            if (!first) {
-                System.out.print(':');
-            }
-            first = false;
-        }
     }
 
     @Override

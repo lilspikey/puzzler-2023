@@ -30,6 +30,7 @@ import ast.StringConstant;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -55,6 +56,7 @@ public class Parser {
         while ((line = nextLine(tokenizer)) != null) {
             lines.add(line);
         }
+        lines.sort(Comparator.comparing(Line::numericLabel));
         return new Program(lines);
     }
 
@@ -70,7 +72,11 @@ public class Parser {
     private List<Statement> nextStatements(Tokenizer tokenizer) throws IOException {
         List<Statement> statements = new ArrayList<>();
         while (true) {
-            statements.add(nextStatement(tokenizer));
+            var statement = nextStatement(tokenizer);
+            statements.add(statement);
+            if (statement instanceof IfStatement) {
+                statements.add(parseThenStatement(tokenizer));
+            }
             var next = tokenizer.peek();
             if (next.type() == Token.Type.EOL) {
                 tokenizer.next();
@@ -105,6 +111,17 @@ public class Parser {
             return nextFloatAssignment(tokenizer);
         }
         throw new IllegalStateException("Unexpected token: " + first);
+    }
+
+    private Statement parseThenStatement(Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.THEN);
+        // see if we have implicit GOTO
+        if (tokenizer.peek().type() == Token.Type.NUMBER) {
+            var destinationLabel = nextExpectedNumber(tokenizer);
+            return new GotoStatement(destinationLabel.text());
+        } else {
+            return nextStatement(tokenizer);
+        }
     }
 
     private ForStatement nextForStatement(Tokenizer tokenizer) throws IOException {
@@ -221,10 +238,8 @@ public class Parser {
     private IfStatement nextIfStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.IF);
         var predicate = nextExpression(tokenizer);
-        nextExpectedKeyword(tokenizer, Keyword.THEN);
-        var destinationLabel = nextExpectedNumber(tokenizer);
-        // TODO support the more complex type of if
-        return new IfStatement(predicate, List.of(new GotoStatement(destinationLabel.text())));
+        peekExpectedKeyword(tokenizer, Keyword.THEN);
+        return new IfStatement(predicate);
     }
 
     private FloatInput nextInputStatement(Tokenizer tokenizer) throws IOException {
@@ -241,6 +256,13 @@ public class Parser {
             throw new IllegalStateException("Expected float expression, but got: " + expression);
         }
         return new FloatAssignment(name.text(), expression);
+    }
+
+    private void peekExpectedKeyword(Tokenizer tokenizer, Keyword expected) throws IOException {
+        var token = tokenizer.peek();
+        if (token.type() != Token.Type.KEYWORD || token.asKeyword() != expected) {
+            throw new IllegalStateException("Expected " + expected + " got: " + token);
+        }
     }
 
     private void nextExpectedKeyword(Tokenizer tokenizer, Keyword expected) throws IOException {

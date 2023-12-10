@@ -21,6 +21,7 @@ import ast.IfStatement;
 import ast.Line;
 import ast.NextStatement;
 import ast.PrintStatement;
+import ast.Program;
 import ast.StringConstant;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -34,10 +35,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
+import java.util.Objects;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -71,6 +76,8 @@ public class JavaASM implements AstVisitor {
     private final Map<String, Label> linesToLabels = new HashMap<>();
     private final Deque<OpenForStatement> openForStatements = new ArrayDeque<>();
     private final List<Consumer<MethodVisitor>> methodCallbacks = new ArrayList<>();
+    private final NavigableSet<Line> lines = new TreeSet<>(Comparator.comparing(Line::numericLabel));
+    private Line currentLine;
     private MethodVisitor currentMethodVisitor;
 
     public byte[] generateClass(String className) throws IOException {
@@ -113,10 +120,19 @@ public class JavaASM implements AstVisitor {
     }
 
     @Override
+    public void visit(Program program) {
+        lines.clear();
+        lines.addAll(program.lines());
+        AstVisitor.super.visit(program);
+    }
+
+    @Override
     public void visit(Line line) {
         var label = new Label();
         linesToLabels.put(line.label(), label);
+        currentLine = line;
         addCallback(methodVisitor -> {
+            currentLine = line;
             methodVisitor.visitLabel(label);
         });
         for (var statement: line.statements()) {
@@ -161,23 +177,16 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(IfStatement statement) {
         addCallback(methodVisitor -> {
-            var falseLabel = new Label();
             statement.predicate().visit(this);
             methodVisitor.visitInsn(F2I);
             // NB logic is inverted 0 = true and -1 = false
-            methodVisitor.visitJumpInsn(IFNE, falseLabel);
-            for (var s: statement.trueStatements()) {
-                s.visit(this);
-            }
-            methodVisitor.visitLabel(falseLabel);
-            methodVisitor.visitInsn(NOP);
+            methodVisitor.visitJumpInsn(IFNE, nextLineLabel(currentLine));
         });
     }
 
     @Override
     public void visit(ForStatement statement) {
-        var continueLabel = new Label();
-        openForStatements.add(new OpenForStatement(statement, continueLabel));
+        openForStatements.add(new OpenForStatement(currentLine, statement));
         var index = getLocalFloatVarIndex(statement.varname());
         addCallback(methodVisitor -> {
             statement.start().visit(this);
@@ -189,8 +198,6 @@ public class JavaASM implements AstVisitor {
             } else {
                 methodVisitor.visitLdcInsn(1.0f);
             }
-            methodVisitor.visitLabel(continueLabel);
-            methodVisitor.visitInsn(NOP);
         });
     }
 
@@ -209,7 +216,7 @@ public class JavaASM implements AstVisitor {
             // then compare end with the loop variable
             methodVisitor.visitVarInsn(FLOAD, varIndex);
             methodVisitor.visitInsn(FCMPG);
-            methodVisitor.visitJumpInsn(IFGE, openFor.continueLabel());
+            methodVisitor.visitJumpInsn(IFGE, nextLineLabel(openFor.line()));
             // loop finished, so remove end + increment from the stack
             methodVisitor.visitInsn(POP2);
         });
@@ -360,17 +367,19 @@ public class JavaASM implements AstVisitor {
     }
 
     private void addCallback(Consumer<MethodVisitor> callback) {
-        if (currentMethodVisitor == null) {
-            methodCallbacks.add(callback);
-        } else {
-            callback.accept(currentMethodVisitor);
-        }
+        methodCallbacks.add(callback);
     }
 
     private int getLocalFloatVarIndex(String name) {
         return localFloatVarIndexes.computeIfAbsent(name, n -> nextLocalVarIndex.getAndIncrement());
     }
 
-    record OpenForStatement(ForStatement forStatement, Label continueLabel) {
+    private Label nextLineLabel(Line line) {
+        var nextLine = Objects.requireNonNull(lines.higher(line), "Could not find line after: " + line);
+        return linesToLabels.get(nextLine.label());
+    }
+
+    record OpenForStatement(Line line, ForStatement forStatement) {
+
     }
 }
