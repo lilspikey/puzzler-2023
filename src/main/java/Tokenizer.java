@@ -1,3 +1,5 @@
+import runtime.FunctionDef;
+
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.Reader;
@@ -9,7 +11,7 @@ import java.util.stream.IntStream;
 
 public class Tokenizer {
     private static final Set<String> SYMBOLS = Set.of(
-        "=", "<>", "<", "<=", ">", ">=", "+", "-", "*", "/", "(", ")", ":"
+        "=", "<>", "<", "<=", ">", ">=", "+", "-", "*", "/", "(", ")", ":", ","
     );
     private static final String SYMBOL_CHARS = SYMBOLS.stream()
             .map(String::chars)
@@ -20,7 +22,9 @@ public class Tokenizer {
     private final Set<String> keywords = Arrays.stream(Keyword.values())
         .map(String::valueOf)
         .collect(Collectors.toSet());
-    private final Set<String> functions = Functions.getFunctionNames();
+    private final Set<String> functions = FunctionDef.getFunctionDefs().stream()
+        .map(FunctionDef::name)
+        .collect(Collectors.toSet());
     private final PushbackReader reader;
     private Token peeked;
 

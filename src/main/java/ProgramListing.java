@@ -170,8 +170,15 @@ public class ProgramListing implements AstVisitor {
 
     @Override
     public void visit(FunctionCall expression) {
-        System.out.print(expression.fn() + "(");
-        expression.arg().visit(this);
+        System.out.print(expression.fn().name() + "(");
+        var first = true;
+        for (var arg: expression.args()) {
+            if (!first) {
+                System.out.print(", ");
+            }
+            arg.visit(this);
+            first = false;
+        }
         System.out.print(")");
     }
 

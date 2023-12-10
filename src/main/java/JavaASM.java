@@ -1,5 +1,6 @@
 import ast.AstVisitor;
 import ast.BinaryExpression;
+import ast.DataType;
 import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
@@ -30,6 +31,8 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.commons.MethodRemapper;
 import org.objectweb.asm.commons.SimpleRemapper;
+import runtime.BasRuntime;
+import runtime.FunctionDef;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +48,7 @@ import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM4;
@@ -82,8 +86,9 @@ public class JavaASM implements AstVisitor {
 
     public byte[] generateClass(String className) throws IOException {
         this.className = className;
-        SimpleRemapper remapper = new SimpleRemapper(BasRuntime.class.getName(), className);
+        SimpleRemapper remapper = new SimpleRemapper(BasRuntime.class.getName().replace('.', '/'), className);
         ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+
         ClassVisitor classVisitor = new ClassVisitor(ASM4, classWriter) {
             @Override
             public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
@@ -106,6 +111,7 @@ public class JavaASM implements AstVisitor {
                 return methodVisitor;
             }
         };
+
         try (var in = getBasRuntimeClassBytes()) {
             ClassReader reader = new ClassReader(in);
             reader.accept(classVisitor, 0);
@@ -354,11 +360,31 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(FunctionCall expression) {
         currentMethodVisitor.visitVarInsn(ALOAD, 0);
-        expression.arg().visit(this);
+        for (var arg: expression.args()) {
+            arg.visit(this);
+        }
         currentMethodVisitor.visitMethodInsn(INVOKEVIRTUAL,
             className,
-            "fn" + expression.fn(),
-            "(F)F");
+            "fn" + expression.fn().name(),
+            toDescriptorString(expression.fn())
+        );
+    }
+
+    private String toDescriptorString(FunctionDef fn) {
+        return String.format(
+            "(%s)%s",
+            fn.argTypes().stream()
+                .map(this::toDescriptorString)
+                .collect(Collectors.joining(",")),
+            toDescriptorString(fn.returnType())
+        );
+    }
+
+    private String toDescriptorString(DataType dataType) {
+        return switch (dataType) {
+            case FLOAT -> Float.TYPE.descriptorString();
+            case STRING -> String.class.descriptorString();
+        };
     }
 
     private void visitExpressions(BinaryExpression expression) {

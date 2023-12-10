@@ -26,6 +26,7 @@ import ast.Program;
 import ast.RemarkStatement;
 import ast.Statement;
 import ast.StringConstant;
+import runtime.FunctionDef;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -33,7 +34,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class Parser {
     private final Map<String, OperatorInfo> operators = Map.of(
@@ -48,6 +52,9 @@ public class Parser {
         "*", new OperatorInfo(3, FloatMultiplication::new),
         "/", new OperatorInfo(4, FloatDivision::new)
     );
+
+    private final Map<String, FunctionDef> functions = FunctionDef.getFunctionDefs().stream()
+        .collect(Collectors.toMap(FunctionDef::name, Function.identity()));
 
     public Program parse(Reader source) throws IOException {
         var tokenizer = new Tokenizer(source);
@@ -214,11 +221,22 @@ public class Parser {
     }
 
     private FunctionCall nextFunctionCall(Tokenizer tokenizer) throws IOException {
-        var fun = nextExpectedFunction(tokenizer);
+        var name = nextExpectedFunction(tokenizer).text();
+        var fn = Objects.requireNonNull(functions.get(name), "Not function found for: " + name);
         nextExpectedSymbol(tokenizer, "(");
-        var arg = nextExpression(tokenizer);
+        var args = new ArrayList<Expression>();
+        for (var argType: fn.argTypes()) {
+            if (!args.isEmpty()) {
+                nextExpectedSymbol(tokenizer, ",");
+            }
+            var arg = nextExpression(tokenizer);
+            if (arg.getDataType() != argType) {
+                throw new IllegalStateException("Expected: " + argType);
+            }
+            args.add(arg);
+        }
         nextExpectedSymbol(tokenizer, ")");
-        return new FunctionCall(fun.text(), arg);
+        return new FunctionCall(fn, args);
     }
 
     private Expression nextSubExpression(Tokenizer tokenizer) throws IOException {

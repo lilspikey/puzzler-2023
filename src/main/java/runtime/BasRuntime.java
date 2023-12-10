@@ -1,3 +1,5 @@
+package runtime;
+
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.text.MessageFormat;
@@ -19,7 +21,15 @@ public class BasRuntime implements Runnable {
     }
 
     float fnSIN(float f) {
-        return (float) Math.sin(f);
+        return (float) Math.sin(Math.toRadians(f));
+    }
+
+    String fnTAB(float f) {
+        var builder = new StringBuilder();
+        for (var i = currentTab; i < f; i++) {
+            builder.append(' ');
+        }
+        return builder.toString();
     }
 
     void print(String s) {

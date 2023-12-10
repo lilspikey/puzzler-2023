@@ -1,10 +1,13 @@
 package ast;
 
-// TODO support variable number of arguments + string data types
-public record FunctionCall(String fn, Expression arg) implements Expression {
+import runtime.FunctionDef;
+
+import java.util.List;
+
+public record FunctionCall(FunctionDef fn, List<Expression> args) implements Expression {
     @Override
     public DataType getDataType() {
-        return DataType.FLOAT;
+        return fn.returnType();
     }
 
     @Override
