@@ -16,6 +16,7 @@ import ast.FloatNotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.ForStatement;
+import ast.FunctionCall;
 import ast.GotoStatement;
 import ast.IfStatement;
 import ast.NextStatement;
@@ -161,6 +162,7 @@ public class Parser {
             case STRING -> new StringConstant(tokenizer.next().text());
             case NUMBER -> new FloatConstant(Float.parseFloat(tokenizer.next().text()));
             case NAME -> new FloatVariable(tokenizer.next().text());
+            case FUNCTION -> nextFunctionCall(tokenizer);
             case SYMBOL -> {
                 if ("(".equals(token.text())) {
                     yield nextSubExpression(tokenizer);
@@ -169,6 +171,14 @@ public class Parser {
             }
             default -> throw new IllegalStateException("Unexpected token: " + tokenizer.peek());
         };
+    }
+
+    private FunctionCall nextFunctionCall(Tokenizer tokenizer) throws IOException {
+        var fun = nextExpectedFunction(tokenizer);
+        nextExpectedSymbol(tokenizer, "(");
+        var arg = nextExpression(tokenizer);
+        nextExpectedSymbol(tokenizer, ")");
+        return new FunctionCall(fun.text(), arg);
     }
 
     private Expression nextSubExpression(Tokenizer tokenizer) throws IOException {
@@ -245,6 +255,14 @@ public class Parser {
         var token = tokenizer.next();
         if (token.type() != Token.Type.SYMBOL || !expected.equals(token.text())) {
             throw new IllegalStateException("Expected " + expected +" got: " + token);
+        }
+        return token;
+    }
+
+    private Token nextExpectedFunction(Tokenizer tokenizer) throws IOException {
+        var token = tokenizer.next();
+        if (token.type() != Token.Type.FUNCTION) {
+            throw new IllegalStateException("Expected FUNCTION got: " + token);
         }
         return token;
     }

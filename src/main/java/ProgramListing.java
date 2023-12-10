@@ -15,6 +15,7 @@ import ast.FloatNotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.ForStatement;
+import ast.FunctionCall;
 import ast.GotoStatement;
 import ast.IfStatement;
 import ast.NextStatement;
@@ -160,6 +161,13 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(FloatDivision expression) {
         binaryExpression("/", expression);
+    }
+
+    @Override
+    public void visit(FunctionCall expression) {
+        System.out.print(expression.fn() + "(");
+        expression.arg().visit(this);
+        System.out.print(")");
     }
 
     private void binaryExpression(String operator, BinaryExpression expression) {

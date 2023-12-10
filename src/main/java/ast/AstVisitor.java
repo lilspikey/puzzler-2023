@@ -44,4 +44,6 @@ public interface AstVisitor {
     void visit(FloatMultiplication expression);
 
     void visit(FloatDivision expression);
+
+    void visit(FunctionCall expression);
 }

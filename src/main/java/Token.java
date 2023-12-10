@@ -8,6 +8,7 @@ public record Token(String text, Type type) {
 
     public enum Type {
         KEYWORD,
+        FUNCTION,
         NUMBER,
         NAME,
         STRING,

@@ -100,6 +100,17 @@ class TokenizerTest {
         );
     }
 
+    @Test
+    void givenFunctions_whenTokenizing_thenTokensReturned() throws IOException {
+        assertEquals(
+            List.of(
+                new Token("INT", Token.Type.FUNCTION),
+                new Token(null, Token.Type.EOF)
+            ),
+            tokenize("INT")
+        );
+    }
+
     private List<Token> tokenize(String code) throws IOException {
         List<Token> tokens = new ArrayList<>();
         Tokenizer tokenizer = new Tokenizer(new StringReader(code));

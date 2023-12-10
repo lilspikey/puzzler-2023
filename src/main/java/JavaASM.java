@@ -15,6 +15,7 @@ import ast.FloatNotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.ForStatement;
+import ast.FunctionCall;
 import ast.GotoStatement;
 import ast.IfStatement;
 import ast.NextStatement;
@@ -329,6 +330,16 @@ public class JavaASM implements AstVisitor {
     public void visit(FloatDivision expression) {
         visitExpressions(expression);
         currentMethodVisitor.visitInsn(FDIV);
+    }
+
+    @Override
+    public void visit(FunctionCall expression) {
+        currentMethodVisitor.visitVarInsn(ALOAD, 0);
+        expression.arg().visit(this);
+        currentMethodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+            className,
+            "fn" + expression.fn(),
+            "(F)F");
     }
 
     private void visitExpressions(BinaryExpression expression) {

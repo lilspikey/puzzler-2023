@@ -2,9 +2,7 @@ import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.Reader;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -19,8 +17,10 @@ public class Tokenizer {
             .distinct()
             .map(ch -> String.valueOf((char) (int) ch))
             .collect(Collectors.joining());
-    private final Map<String, Keyword> keywordMapping = Arrays.stream(Keyword.values())
-        .collect(Collectors.toMap(String::valueOf, Function.identity()));
+    private final Set<String> keywords = Arrays.stream(Keyword.values())
+        .map(String::valueOf)
+        .collect(Collectors.toSet());
+    private final Set<String> functions = Functions.getFunctionNames();
     private final PushbackReader reader;
     private Token peeked;
 
@@ -62,8 +62,11 @@ public class Tokenizer {
                     this::isUppercaseAlphabetic,
                     builder -> isKeyword(builder.toString())
                 );
-                if (keywordMapping.containsKey(text)) {
+                if (isKeyword(text)) {
                     return new Token(text, Token.Type.KEYWORD);
+                }
+                if (isFunction(text)) {
+                    return new Token(text, Token.Type.FUNCTION);
                 }
                 return new Token(text, Token.Type.NAME);
             }
@@ -127,7 +130,11 @@ public class Tokenizer {
     }
 
     private boolean isKeyword(String text) {
-        return keywordMapping.containsKey(text);
+        return keywords.contains(text);
+    }
+
+    private boolean isFunction(String text) {
+        return functions.contains(text);
     }
 
     private boolean isUppercaseAlphabetic(int c) {

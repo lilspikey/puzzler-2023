@@ -10,6 +10,14 @@ import java.util.Scanner;
 public class BasRuntime {
     private int currentTab = 0;
 
+    float fnINT(float f) {
+        return (int) f;
+    }
+
+    float fnSIN(float f) {
+        return (float) Math.sin(f);
+    }
+
     void print(String s) {
         System.out.print(s);
         currentTab += s.length();
