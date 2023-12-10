@@ -8,17 +8,20 @@ import java.util.Scanner;
  without having to manually create lots of byte code
  */
 public class BasRuntime {
+    private int currentTab = 0;
 
     void print(String s) {
         System.out.print(s);
+        currentTab += s.length();
     }
 
     void print(float f) {
-        System.out.print(MessageFormat.format("{0,number,0.###}", f));
+        print(MessageFormat.format("{0,number,0.###}", f));
     }
 
     void println() {
         System.out.println();
+        currentTab = 0;
     }
 
     float inputFloat() {

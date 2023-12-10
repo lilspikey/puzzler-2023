@@ -92,7 +92,7 @@ public class JavaASM implements AstVisitor {
                         callback.accept(methodVisitor);
                     }
                     methodVisitor.visitEnd();
-                } else if ("main".equals(name)) {
+                } else {
                     return new MethodRemapper(methodVisitor, remapper);
                 }
                 return methodVisitor;
