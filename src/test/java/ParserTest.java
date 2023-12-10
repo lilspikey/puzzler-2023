@@ -192,4 +192,23 @@ class ParserTest {
         );
     }
 
+    @Test
+    public void givenMultiStatementLine_whenParsing_thenProgramReturned() throws IOException {
+        Parser parser = new Parser();
+        Program program = parser.parse(new StringReader(
+            "100 PRINT : PRINT \"hi\""
+        ));
+        assertEquals(
+            new Program(List.of(
+                new Line("100",
+                    List.of(
+                        new PrintStatement(List.of()),
+                        new PrintStatement(List.of(new StringConstant("hi")))
+                    )
+                )
+            )),
+            program
+        );
+    }
+
 }

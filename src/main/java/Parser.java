@@ -63,20 +63,29 @@ public class Parser {
             return null;
         }
         var label = nextExpectedNumber(tokenizer).text();
+        var statements = nextStatements(tokenizer);
+        return new Line(label, statements);
+    }
+
+    private List<Statement> nextStatements(Tokenizer tokenizer) throws IOException {
         List<Statement> statements = new ArrayList<>();
         while (true) {
             statements.add(nextStatement(tokenizer));
-            var end = tokenizer.peek();
-            if (end.type() == Token.Type.EOL) {
+            var next = tokenizer.peek();
+            if (next.type() == Token.Type.EOL) {
                 tokenizer.next();
                 break;
-            } else if (end.type() == Token.Type.EOF) {
+            } else if (next.type() == Token.Type.EOF) {
                 break;
-            } else {
-                throw new IllegalArgumentException("Expected end of line or end of file, got:" + end);
+            } else if (next.type() == Token.Type.SYMBOL) {
+                if (":".equals(next.text())) {
+                    tokenizer.next();
+                    continue;
+                }
             }
+            throw new IllegalArgumentException("Expected end of line or end of file, got:" + next);
         }
-        return new Line(label, statements);
+        return statements;
     }
 
     private Statement nextStatement(Tokenizer tokenizer) throws IOException {
@@ -132,9 +141,16 @@ public class Parser {
         var expressions = new ArrayList<Expression>();
         var done = false;
         while (!done) {
-            switch (tokenizer.peek().type()) {
+            var next = tokenizer.peek();
+            switch (next.type()) {
                 case EOL, EOF -> done = true;
-                default -> expressions.add(nextExpression(tokenizer));
+                default -> {
+                    if (next.type() == Token.Type.SYMBOL && ":".equals(next.text())) {
+                        done = true;
+                    } else {
+                        expressions.add(nextExpression(tokenizer));
+                    }
+                }
             }
         }
         return new PrintStatement(expressions);
