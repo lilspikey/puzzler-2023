@@ -1,0 +1,12 @@
+10 A = 1
+20 B = 2
+30 C = 3
+40 D = 0.5
+50 PRINT "A + B + C + D = " A + B + C + D
+60 PRINT "A - B - C - D = " A - B - C - D
+70 PRINT "A * B + C / D = " A * B + C / D
+80 PRINT "(A * B) + (C / D) = " (A * B) + (C / D)
+90 PRINT "A * (B + C) / D = " A * (B + C) / D
+100 PRINT "A + B * C - D = " A + B * C - D
+110 PRINT "A + (B * C) - D = " A + (B * C) - D
+120 PRINT "(A + B) * (C - D) = " (A + B) * (C - D)

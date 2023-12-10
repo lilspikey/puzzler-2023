@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class IntegrationTest {
 
     @ParameterizedTest
-    @ValueSource(strings = { "hello", "loop" })
+    @ValueSource(strings = { "hello", "loop", "expressions" })
     void givenSource_whenCompilingAndRunning_thenCorrectOutputGenerated(String exampleDir) throws Exception {
         var javaAsm = new JavaASM();
         var inputSource = "examples/" + exampleDir + "/input.bas";
