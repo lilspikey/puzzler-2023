@@ -34,6 +34,6 @@ public class BasRuntime {
     }
 
     public static void main(String[] args) {
-
+        new BasRuntime().run();
     }
 }

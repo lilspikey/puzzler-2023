@@ -26,6 +26,8 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.commons.MethodRemapper;
+import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +42,6 @@ import java.util.function.Consumer;
 
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM4;
-import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.DUP2;
 import static org.objectweb.asm.Opcodes.F2I;
 import static org.objectweb.asm.Opcodes.FADD;
@@ -58,9 +59,7 @@ import static org.objectweb.asm.Opcodes.IFGT;
 import static org.objectweb.asm.Opcodes.IFLE;
 import static org.objectweb.asm.Opcodes.IFLT;
 import static org.objectweb.asm.Opcodes.IFNE;
-import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
-import static org.objectweb.asm.Opcodes.NEW;
 import static org.objectweb.asm.Opcodes.NOP;
 import static org.objectweb.asm.Opcodes.POP2;
 
@@ -75,6 +74,7 @@ public class JavaASM implements AstVisitor {
 
     public byte[] generateClass(String className) throws IOException {
         this.className = className;
+        SimpleRemapper remapper = new SimpleRemapper(BasRuntime.class.getName(), className);
         ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
         ClassVisitor classVisitor = new ClassVisitor(ASM4, classWriter) {
             @Override
@@ -93,20 +93,7 @@ public class JavaASM implements AstVisitor {
                     }
                     methodVisitor.visitEnd();
                 } else if ("main".equals(name)) {
-                    methodVisitor.visitCode();
-                    // simple main method that basically does
-                    // new <className>().run();
-                    methodVisitor.visitTypeInsn(NEW, className);
-                    methodVisitor.visitInsn(DUP);
-                    methodVisitor.visitMethodInsn(INVOKESPECIAL,
-                            className,
-                            "<init>",
-                            "()V");
-                    methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
-                            className,
-                            "run",
-                            "()V");
-                    methodVisitor.visitEnd();
+                    return new MethodRemapper(methodVisitor, remapper);
                 }
                 return methodVisitor;
             }
