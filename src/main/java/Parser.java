@@ -56,6 +56,8 @@ public class Parser {
     private final Map<String, FunctionDef> functions = FunctionDef.getFunctionDefs().stream()
         .collect(Collectors.toMap(FunctionDef::name, Function.identity()));
 
+    private String currentLineNumber;
+
     public Program parse(Reader source) throws IOException {
         var tokenizer = new Tokenizer(source);
         var lines = new ArrayList<Line>();
@@ -72,6 +74,7 @@ public class Parser {
             return null;
         }
         var label = nextExpectedNumber(tokenizer).text();
+        currentLineNumber = label;
         var statements = nextStatements(tokenizer);
         return new Line(label, statements);
     }
@@ -112,12 +115,12 @@ public class Parser {
                 case REM -> nextComment(tokenizer);
                 case FOR -> nextForStatement(tokenizer);
                 case NEXT -> nextNextStatement(tokenizer);
-                default -> throw new IllegalStateException("Unexpected token:" + first);
+                default -> throw parseError("Unexpected token:" + first);
             };
         } else if (first.type() == Token.Type.NAME) {
             return nextFloatAssignment(tokenizer);
         }
-        throw new IllegalStateException("Unexpected token: " + first);
+        throw parseError("Unexpected token: " + first);
     }
 
     private Statement parseThenStatement(Tokenizer tokenizer) throws IOException {
@@ -214,9 +217,9 @@ public class Parser {
                 if ("(".equals(token.text())) {
                     yield nextSubExpression(tokenizer);
                 }
-                throw new IllegalStateException("Unexpected token: " + tokenizer.peek());
+                throw parseError("Unexpected token: " + tokenizer.peek());
             }
-            default -> throw new IllegalStateException("Unexpected token: " + tokenizer.peek());
+            default -> throw parseError("Unexpected token: " + tokenizer.peek());
         };
     }
 
@@ -231,7 +234,7 @@ public class Parser {
             }
             var arg = nextExpression(tokenizer);
             if (arg.getDataType() != argType) {
-                throw new IllegalStateException("Expected: " + argType);
+                throw parseError("Expected: " + argType);
             }
             args.add(arg);
         }
@@ -271,7 +274,7 @@ public class Parser {
         nextExpectedSymbol(tokenizer, "=");
         Expression expression = nextExpression(tokenizer);
         if (expression.getDataType() != DataType.FLOAT) {
-            throw new IllegalStateException("Expected float expression, but got: " + expression);
+            throw parseError("Expected float expression, but got: " + expression);
         }
         return new FloatAssignment(name.text(), expression);
     }
@@ -279,21 +282,21 @@ public class Parser {
     private void peekExpectedKeyword(Tokenizer tokenizer, Keyword expected) throws IOException {
         var token = tokenizer.peek();
         if (token.type() != Token.Type.KEYWORD || token.asKeyword() != expected) {
-            throw new IllegalStateException("Expected " + expected + " got: " + token);
+            throw parseError("Expected " + expected + " got: " + token);
         }
     }
 
     private void nextExpectedKeyword(Tokenizer tokenizer, Keyword expected) throws IOException {
         var token = tokenizer.next();
         if (token.type() != Token.Type.KEYWORD || token.asKeyword() != expected) {
-            throw new IllegalStateException("Expected " + expected + " got: " + token);
+            throw parseError("Expected " + expected + " got: " + token);
         }
     }
 
     private Token nextExpectedName(Tokenizer tokenizer) throws IOException {
         var token = tokenizer.next();
         if (token.type() != Token.Type.NAME) {
-            throw new IllegalStateException("Expected name got: " + token);
+            throw parseError("Expected name got: " + token);
         }
         return token;
     }
@@ -301,7 +304,7 @@ public class Parser {
     private Token nextExpectedNumber(Tokenizer tokenizer) throws IOException {
         var token = tokenizer.next();
         if (token.type() != Token.Type.NUMBER) {
-            throw new IllegalStateException("Expected number got: " + token);
+            throw parseError("Expected number got: " + token);
         }
         return token;
     }
@@ -309,7 +312,7 @@ public class Parser {
     private Token nextExpectedSymbol(Tokenizer tokenizer) throws IOException {
         var token = tokenizer.next();
         if (token.type() != Token.Type.SYMBOL) {
-            throw new IllegalStateException("Expected symbol got: " + token);
+            throw parseError("Expected symbol got: " + token);
         }
         return token;
     }
@@ -317,7 +320,7 @@ public class Parser {
     private Token nextExpectedSymbol(Tokenizer tokenizer, String expected) throws IOException {
         var token = tokenizer.next();
         if (token.type() != Token.Type.SYMBOL || !expected.equals(token.text())) {
-            throw new IllegalStateException("Expected " + expected +" got: " + token);
+            throw parseError("Expected " + expected +" got: " + token);
         }
         return token;
     }
@@ -325,9 +328,13 @@ public class Parser {
     private Token nextExpectedFunction(Tokenizer tokenizer) throws IOException {
         var token = tokenizer.next();
         if (token.type() != Token.Type.FUNCTION) {
-            throw new IllegalStateException("Expected FUNCTION got: " + token);
+            throw parseError("Expected FUNCTION got: " + token);
         }
         return token;
+    }
+
+    private RuntimeException parseError(String message) {
+        return new IllegalStateException("Line " + currentLineNumber + ": " + message);
     }
 
     record OperatorInfo(int precedence, BiFunction<Expression, Expression, BinaryExpression> newOperator) {
