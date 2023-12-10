@@ -5,6 +5,7 @@ import ast.FloatMultiplication;
 import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.IfStatement;
+import ast.Line;
 import ast.PrintStatement;
 import ast.Program;
 import ast.StringConstant;
@@ -28,8 +29,8 @@ class ParserTest {
         assertEquals(
             new Program(
                 List.of(
-                    new PrintStatement("100", List.of(new StringConstant("HELLO WORLD"))),
-                    new GotoStatement("200", "100")
+                    new Line("100", List.of(new PrintStatement(List.of(new StringConstant("HELLO WORLD"))))),
+                    new Line("200", List.of(new GotoStatement("100")))
                 )
             ),
             program
@@ -48,10 +49,10 @@ class ParserTest {
         assertEquals(
             new Program(
                 List.of(
-                    new FloatAssignment("100", "A", new FloatConstant(1.0f)),
-                    new PrintStatement("200", List.of(new StringConstant("A = "), new FloatVariable("A"))),
-                    new FloatAssignment("300", "B", new FloatVariable("A")),
-                    new PrintStatement("400", List.of(new StringConstant("B = "), new FloatVariable("B")))
+                    new Line("100", List.of(new FloatAssignment("A", new FloatConstant(1.0f)))),
+                    new Line("200", List.of(new PrintStatement(List.of(new StringConstant("A = "), new FloatVariable("A"))))),
+                    new Line("300", List.of(new FloatAssignment("B", new FloatVariable("A")))),
+                    new Line("400", List.of(new PrintStatement(List.of(new StringConstant("B = "), new FloatVariable("B")))))
                 )
             ),
             program
@@ -69,15 +70,17 @@ class ParserTest {
         assertEquals(
             new Program(
                 List.of(
-                    new FloatAssignment("100", "A", new FloatConstant(2.0f)),
-                    new FloatAssignment("200", "A",
-                        new FloatAddition(
+                    new Line("100", List.of(new FloatAssignment("A", new FloatConstant(2.0f)))),
+                    new Line("200", List.of(
+                        new FloatAssignment("A",
                             new FloatAddition(
-                                new FloatVariable("A"), new FloatConstant(1.0f)
-                            ),
-                            new FloatConstant(2.0f)
+                                new FloatAddition(
+                                    new FloatVariable("A"), new FloatConstant(1.0f)
+                                ),
+                                new FloatConstant(2.0f)
+                            )
                         )
-                    )
+                    ))
                 )
             ),
             program
@@ -95,15 +98,17 @@ class ParserTest {
         assertEquals(
             new Program(
                 List.of(
-                    new FloatAssignment("100", "A", new FloatConstant(2.0f)),
-                    new FloatAssignment("200", "A",
-                        new FloatMultiplication(
+                    new Line("100", List.of(new FloatAssignment("A", new FloatConstant(2.0f)))),
+                    new Line("200", List.of(
+                        new FloatAssignment("A",
                             new FloatMultiplication(
-                                new FloatVariable("A"), new FloatConstant(1.0f)
-                            ),
-                            new FloatConstant(2.0f)
+                                new FloatMultiplication(
+                                    new FloatVariable("A"), new FloatConstant(1.0f)
+                                ),
+                                new FloatConstant(2.0f)
+                            )
                         )
-                    )
+                    ))
                 )
             ),
             program
@@ -121,15 +126,17 @@ class ParserTest {
         assertEquals(
             new Program(
                 List.of(
-                    new FloatAssignment("100", "A", new FloatConstant(2.0f)),
-                    new FloatAssignment("200", "A",
-                        new FloatAddition(
-                            new FloatVariable("A"),
-                            new FloatMultiplication(
-                                new FloatConstant(3.0f), new FloatConstant(2.0f)
+                    new Line("100", List.of(new FloatAssignment("A", new FloatConstant(2.0f)))),
+                    new Line("200", List.of(
+                        new FloatAssignment("A",
+                            new FloatAddition(
+                                new FloatVariable("A"),
+                                new FloatMultiplication(
+                                    new FloatConstant(3.0f), new FloatConstant(2.0f)
+                                )
                             )
                         )
-                    )
+                    ))
                 )
             ),
             program
@@ -146,10 +153,12 @@ class ParserTest {
         assertEquals(
             new Program(
                 List.of(
-                    new FloatAssignment("100", "A", new FloatConstant(2.0f)),
-                    new IfStatement("200", new FloatVariable("A"),
-                        List.of(new GotoStatement(null, "100"))
-                    )
+                    new Line("100", List.of(new FloatAssignment("A", new FloatConstant(2.0f)))),
+                    new Line("200", List.of(
+                        new IfStatement(new FloatVariable("A"),
+                            List.of(new GotoStatement("100"))
+                        )
+                    ))
                 )
             ),
             program
@@ -165,15 +174,17 @@ class ParserTest {
         assertEquals(
             new Program(
                 List.of(
-                    new FloatAssignment("100", "A", new FloatAddition(
-                        new FloatAddition(
-                            new FloatMultiplication(
-                                new FloatAddition(new FloatConstant(1.0f), new FloatConstant(2.0f)),
-                                new FloatConstant(4.0f)
+                    new Line("100", List.of(
+                        new FloatAssignment("A", new FloatAddition(
+                            new FloatAddition(
+                                new FloatMultiplication(
+                                    new FloatAddition(new FloatConstant(1.0f), new FloatConstant(2.0f)),
+                                    new FloatConstant(4.0f)
+                                ),
+                                new FloatConstant(1.0f)
                             ),
-                            new FloatConstant(1.0f)
-                        ),
-                        new FloatConstant(2.0f)
+                            new FloatConstant(2.0f)
+                        ))
                     ))
                 )
             ),

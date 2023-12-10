@@ -1,6 +1,8 @@
 package ast;
 
 public interface AstVisitor {
+    void visit(Line line);
+
     void visit(PrintStatement statement);
 
     void visit(GotoStatement statement);

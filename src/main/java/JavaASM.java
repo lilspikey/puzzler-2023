@@ -18,9 +18,9 @@ import ast.ForStatement;
 import ast.FunctionCall;
 import ast.GotoStatement;
 import ast.IfStatement;
+import ast.Line;
 import ast.NextStatement;
 import ast.PrintStatement;
-import ast.Statement;
 import ast.StringConstant;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -113,8 +113,20 @@ public class JavaASM implements AstVisitor {
     }
 
     @Override
+    public void visit(Line line) {
+        var label = new Label();
+        linesToLabels.put(line.label(), label);
+        addCallback(methodVisitor -> {
+            methodVisitor.visitLabel(label);
+        });
+        for (var statement: line.statements()) {
+            statement.visit(this);
+        }
+    }
+
+    @Override
     public void visit(PrintStatement statement) {
-        addCallback(statement, methodVisitor -> {
+        addCallback(methodVisitor -> {
             for (var expression: statement.expressions()) {
                 methodVisitor.visitVarInsn(ALOAD, 0);
                 expression.visit(this);
@@ -137,7 +149,7 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(GotoStatement statement) {
-        addCallback(statement, methodVisitor -> {
+        addCallback(methodVisitor -> {
             var label = linesToLabels.get(statement.destinationLabel());
             if (label == null) {
                 throw new IllegalStateException("Unknown destination label: " + statement);
@@ -148,7 +160,7 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(IfStatement statement) {
-        addCallback(statement, methodVisitor -> {
+        addCallback(methodVisitor -> {
             var falseLabel = new Label();
             statement.predicate().visit(this);
             methodVisitor.visitInsn(F2I);
@@ -167,7 +179,7 @@ public class JavaASM implements AstVisitor {
         var continueLabel = new Label();
         openForStatements.add(new OpenForStatement(statement, continueLabel));
         var index = getLocalFloatVarIndex(statement.varname());
-        addCallback(statement, methodVisitor -> {
+        addCallback(methodVisitor -> {
             statement.start().visit(this);
             methodVisitor.visitVarInsn(FSTORE, index);
             // end + increment go on the stack, to be used by NEXT statement
@@ -185,7 +197,7 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(NextStatement statement) {
         var openFor = findMatchingForStatement(statement);
-        addCallback(statement, methodVisitor -> {
+        addCallback(methodVisitor -> {
             var forStatement = openFor.forStatement();
             // copy end + increment from stack
             methodVisitor.visitInsn(DUP2);
@@ -221,7 +233,7 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(FloatInput statement) {
         var index = getLocalFloatVarIndex(statement.name());
-        addCallback(statement, methodVisitor -> {
+        addCallback(methodVisitor -> {
             methodVisitor.visitVarInsn(ALOAD, 0);
             methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
                     className,
@@ -234,7 +246,7 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(FloatAssignment statement) {
         var index = getLocalFloatVarIndex(statement.name());
-        addCallback(statement, methodVisitor -> {
+        addCallback(methodVisitor -> {
             statement.expression().visit(this);
             methodVisitor.visitVarInsn(FSTORE, index);
         });
@@ -347,28 +359,12 @@ public class JavaASM implements AstVisitor {
         expression.rhs().visit(this);
     }
 
-    private void addCallback(Statement statement, Consumer<MethodVisitor> callback) {
-        var label = createLineLabel(statement);
-        Consumer<MethodVisitor> methodCallback = methodVisitor -> {
-            if (label != null) {
-                methodVisitor.visitLabel(label);
-            }
-            callback.accept(methodVisitor);
-        };
+    private void addCallback(Consumer<MethodVisitor> callback) {
         if (currentMethodVisitor == null) {
-            methodCallbacks.add(methodCallback);
+            methodCallbacks.add(callback);
         } else {
-            methodCallback.accept(currentMethodVisitor);
+            callback.accept(currentMethodVisitor);
         }
-    }
-
-    private Label createLineLabel(Statement statement) {
-        if (statement.lineLabel() != null) {
-            var label = new Label();
-            linesToLabels.put(statement.lineLabel(), label);
-            return label;
-        }
-        return null;
     }
 
     private int getLocalFloatVarIndex(String name) {

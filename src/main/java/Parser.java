@@ -19,6 +19,7 @@ import ast.ForStatement;
 import ast.FunctionCall;
 import ast.GotoStatement;
 import ast.IfStatement;
+import ast.Line;
 import ast.NextStatement;
 import ast.PrintStatement;
 import ast.Program;
@@ -49,49 +50,55 @@ public class Parser {
 
     public Program parse(Reader source) throws IOException {
         var tokenizer = new Tokenizer(source);
-        var statements = new ArrayList<Statement>();
-        Statement statement;
-        while ((statement = nextStatement(tokenizer)) != null) {
-            statements.add(statement);
+        var lines = new ArrayList<Line>();
+        Line line;
+        while ((line = nextLine(tokenizer)) != null) {
+            lines.add(line);
         }
-        return new Program(statements);
+        return new Program(lines);
     }
 
-    private Statement nextStatement(Tokenizer tokenizer) throws IOException {
+    private Line nextLine(Tokenizer tokenizer) throws IOException {
         if (tokenizer.peek().type() == Token.Type.EOF) {
             return null;
         }
-        String label = null;
-        if (tokenizer.peek().type() == Token.Type.NUMBER) {
-            label = tokenizer.next().text();
+        var label = nextExpectedNumber(tokenizer).text();
+        List<Statement> statements = new ArrayList<>();
+        while (true) {
+            statements.add(nextStatement(tokenizer));
+            var end = tokenizer.peek();
+            if (end.type() == Token.Type.EOL) {
+                tokenizer.next();
+                break;
+            } else if (end.type() == Token.Type.EOF) {
+                break;
+            } else {
+                throw new IllegalArgumentException("Expected end of line or end of file, got:" + end);
+            }
         }
+        return new Line(label, statements);
+    }
+
+    private Statement nextStatement(Tokenizer tokenizer) throws IOException {
         var first = tokenizer.peek();
-        Statement statement = null;
         if (first.type() == Token.Type.KEYWORD) {
-            statement = switch (first.asKeyword()) {
-                case PRINT -> nextPrintStatement(label, tokenizer);
-                case GO -> nextGotoStatement(label, tokenizer);
-                case IF -> nextIfStatement(label, tokenizer);
-                case INPUT -> nextInputStatement(label, tokenizer);
-                case REM -> nextComment(label, tokenizer);
-                case FOR -> nextForStatement(label, tokenizer);
-                case NEXT -> nextNextStatement(label, tokenizer);
+            return switch (first.asKeyword()) {
+                case PRINT -> nextPrintStatement(tokenizer);
+                case GO -> nextGotoStatement(tokenizer);
+                case IF -> nextIfStatement(tokenizer);
+                case INPUT -> nextInputStatement(tokenizer);
+                case REM -> nextComment(tokenizer);
+                case FOR -> nextForStatement(tokenizer);
+                case NEXT -> nextNextStatement(tokenizer);
                 default -> throw new IllegalStateException("Unexpected token:" + first);
             };
         } else if (first.type() == Token.Type.NAME) {
-            statement = nextFloatAssignment(label, tokenizer);
+            return nextFloatAssignment(tokenizer);
         }
-        var end = tokenizer.peek();
-        if (end.type() != Token.Type.EOL && end.type() != Token.Type.EOF) {
-            throw new IllegalArgumentException("Expected end of line or end of file, got:" + end);
-        }
-        if (end.type() == Token.Type.EOL) {
-            tokenizer.next();
-        }
-        return statement;
+        throw new IllegalStateException("Unexpected token: " + first);
     }
 
-    private ForStatement nextForStatement(String label, Tokenizer tokenizer) throws IOException {
+    private ForStatement nextForStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.FOR);
         var varname = nextExpectedName(tokenizer).text();
         nextExpectedSymbol(tokenizer, "=");
@@ -103,24 +110,24 @@ public class Parser {
             nextExpectedKeyword(tokenizer, Keyword.STEP);
             step = nextExpression(tokenizer);
         }
-        return new ForStatement(label, varname, start, end, step);
+        return new ForStatement(varname, start, end, step);
     }
 
-    private NextStatement nextNextStatement(String label, Tokenizer tokenizer) throws IOException {
+    private NextStatement nextNextStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.NEXT);
         String varname = null;
         if (tokenizer.peek().type() == Token.Type.NAME) {
             varname = tokenizer.next().text();
         }
-        return new NextStatement(label, varname);
+        return new NextStatement(varname);
     }
 
-    private RemarkStatement nextComment(String label, Tokenizer tokenizer) throws IOException {
+    private RemarkStatement nextComment(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.REM);
-        return new RemarkStatement(label, tokenizer.readTillEndOfLine());
+        return new RemarkStatement(tokenizer.readTillEndOfLine());
     }
 
-    private PrintStatement nextPrintStatement(String label, Tokenizer tokenizer) throws IOException {
+    private PrintStatement nextPrintStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.PRINT);
         var expressions = new ArrayList<Expression>();
         var done = false;
@@ -130,7 +137,7 @@ public class Parser {
                 default -> expressions.add(nextExpression(tokenizer));
             }
         }
-        return new PrintStatement(label, expressions);
+        return new PrintStatement(expressions);
     }
 
     private Expression nextExpression(Tokenizer tokenizer) throws IOException {
@@ -188,36 +195,36 @@ public class Parser {
         return expression;
     }
 
-    private GotoStatement nextGotoStatement(String label, Tokenizer tokenizer) throws IOException {
+    private GotoStatement nextGotoStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.GO);
         nextExpectedKeyword(tokenizer, Keyword.TO);
         var destinationLabel = nextExpectedNumber(tokenizer);
-        return new GotoStatement(label, destinationLabel.text());
+        return new GotoStatement(destinationLabel.text());
     }
 
-    private IfStatement nextIfStatement(String label, Tokenizer tokenizer) throws IOException {
+    private IfStatement nextIfStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.IF);
         var predicate = nextExpression(tokenizer);
         nextExpectedKeyword(tokenizer, Keyword.THEN);
         var destinationLabel = nextExpectedNumber(tokenizer);
         // TODO support the more complex type of if
-        return new IfStatement(label, predicate, List.of(new GotoStatement(null, destinationLabel.text())));
+        return new IfStatement(predicate, List.of(new GotoStatement(destinationLabel.text())));
     }
 
-    private FloatInput nextInputStatement(String label, Tokenizer tokenizer) throws IOException {
+    private FloatInput nextInputStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.INPUT);
         var name = nextExpectedName(tokenizer);
-        return new FloatInput(label, name.text());
+        return new FloatInput(name.text());
     }
 
-    private FloatAssignment nextFloatAssignment(String label, Tokenizer tokenizer) throws IOException {
+    private FloatAssignment nextFloatAssignment(Tokenizer tokenizer) throws IOException {
         var name = nextExpectedName(tokenizer);
         nextExpectedSymbol(tokenizer, "=");
         Expression expression = nextExpression(tokenizer);
         if (expression.getDataType() != DataType.FLOAT) {
             throw new IllegalStateException("Expected float expression, but got: " + expression);
         }
-        return new FloatAssignment(label, name.text(), expression);
+        return new FloatAssignment(name.text(), expression);
     }
 
     private void nextExpectedKeyword(Tokenizer tokenizer, Keyword expected) throws IOException {

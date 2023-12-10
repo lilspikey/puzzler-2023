@@ -18,6 +18,7 @@ import ast.ForStatement;
 import ast.FunctionCall;
 import ast.GotoStatement;
 import ast.IfStatement;
+import ast.Line;
 import ast.NextStatement;
 import ast.PrintStatement;
 import ast.RemarkStatement;
@@ -28,24 +29,33 @@ import ast.StringConstant;
  Just a simple visitor to walk the AST and print it out
  */
 public class ProgramListing implements AstVisitor {
+
     @Override
-    public void visit(PrintStatement statement) {
-        System.out.print(lineLabelPrefix(statement) + " PRINT ");
-        for (var expression: statement.expressions()) {
-            expression.visit(this);
-            System.out.print(' ');
+    public void visit(Line line) {
+        System.out.print(line.label() + " ");
+        for (var statement: line.statements()) {
+            statement.visit(this);
         }
         System.out.println();
     }
 
     @Override
+    public void visit(PrintStatement statement) {
+        System.out.print("PRINT ");
+        for (var expression: statement.expressions()) {
+            expression.visit(this);
+            System.out.print(' ');
+        }
+    }
+
+    @Override
     public void visit(GotoStatement statement) {
-        System.out.println(lineLabelPrefix(statement) + " GOTO " + statement.destinationLabel());
+        System.out.print("GOTO " + statement.destinationLabel());
     }
 
     @Override
     public void visit(IfStatement statement) {
-        System.out.print(lineLabelPrefix(statement) + " IF ");
+        System.out.print("IF ");
         statement.predicate().visit(this);
         System.out.print(" THEN ");
         var first = true;
@@ -56,29 +66,27 @@ public class ProgramListing implements AstVisitor {
             }
             first = false;
         }
-        System.out.println();
     }
 
     @Override
     public void visit(FloatAssignment statement) {
-        System.out.print(lineLabelPrefix(statement) + " " + statement.name() + " = ");
+        System.out.print(statement.name() + " = ");
         statement.expression().visit(this);
-        System.out.println();
     }
 
     @Override
     public void visit(FloatInput statement) {
-        System.out.println(lineLabelPrefix(statement) + " INPUT " + statement.name());
+        System.out.print("INPUT " + statement.name());
     }
 
     @Override
     public void visit(RemarkStatement statement) {
-        System.out.println(lineLabelPrefix(statement) + " REM " + statement.comment());
+        System.out.print("REM " + statement.comment());
     }
 
     @Override
     public void visit(ForStatement statement) {
-        System.out.print(lineLabelPrefix(statement) + " FOR " + statement.varname() + " = ");
+        System.out.print("FOR " + statement.varname() + " = ");
         statement.start().visit(this);
         System.out.print(" TO ");
         statement.end().visit(this);
@@ -86,16 +94,14 @@ public class ProgramListing implements AstVisitor {
             System.out.print(" STEP ");
             statement.increment().visit(this);
         }
-        System.out.println();
     }
 
     @Override
     public void visit(NextStatement statement) {
-        System.out.print(lineLabelPrefix(statement) + " NEXT");
+        System.out.print("NEXT");
         if (statement.varname() != null) {
-            System.out.println(" " + statement.varname());
+            System.out.print(" " + statement.varname());
         }
-        System.out.println();
     }
 
     @Override
@@ -176,12 +182,5 @@ public class ProgramListing implements AstVisitor {
         System.out.print(operator);
         expression.rhs().visit(this);
         System.out.print(")");
-    }
-
-    private String lineLabelPrefix(Statement statement) {
-        if (statement.lineLabel() == null) {
-            return "";
-        }
-        return statement.lineLabel();
     }
 }
