@@ -8,5 +8,6 @@ public enum Keyword {
     REM,
     FOR,
     STEP,
-    NEXT
+    NEXT,
+    END
 }

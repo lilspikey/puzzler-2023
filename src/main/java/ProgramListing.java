@@ -1,5 +1,6 @@
 import ast.AstVisitor;
 import ast.BinaryExpression;
+import ast.EndStatement;
 import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
@@ -101,6 +102,11 @@ public class ProgramListing implements AstVisitor {
         if (statement.varname() != null) {
             System.out.print(" " + statement.varname());
         }
+    }
+
+    @Override
+    public void visit(EndStatement statement) {
+        System.out.print("END");
     }
 
     @Override

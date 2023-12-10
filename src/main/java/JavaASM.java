@@ -1,6 +1,7 @@
 import ast.AstVisitor;
 import ast.BinaryExpression;
 import ast.DataType;
+import ast.EndStatement;
 import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
@@ -72,6 +73,7 @@ import static org.objectweb.asm.Opcodes.IFNE;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.NOP;
 import static org.objectweb.asm.Opcodes.POP2;
+import static org.objectweb.asm.Opcodes.RETURN;
 
 public class JavaASM implements AstVisitor {
     private String className;
@@ -225,6 +227,13 @@ public class JavaASM implements AstVisitor {
             methodVisitor.visitJumpInsn(IFGE, nextLineLabel(openFor.line()));
             // loop finished, so remove end + increment from the stack
             methodVisitor.visitInsn(POP2);
+        });
+    }
+
+    @Override
+    public void visit(EndStatement statement) {
+        addCallback(methodVisitor -> {
+            methodVisitor.visitInsn(RETURN);
         });
     }
 

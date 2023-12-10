@@ -1,5 +1,6 @@
 import ast.BinaryExpression;
 import ast.DataType;
+import ast.EndStatement;
 import ast.Expression;
 import ast.FloatAddition;
 import ast.FloatAssignment;
@@ -115,6 +116,7 @@ public class Parser {
                 case REM -> nextComment(tokenizer);
                 case FOR -> nextForStatement(tokenizer);
                 case NEXT -> nextNextStatement(tokenizer);
+                case END -> nextEndStatement(tokenizer);
                 default -> throw parseError("Unexpected token:" + first);
             };
         } else if (first.type() == Token.Type.NAME) {
@@ -181,6 +183,11 @@ public class Parser {
             }
         }
         return new PrintStatement(expressions);
+    }
+
+    private EndStatement nextEndStatement(Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.END);
+        return new EndStatement();
     }
 
     private Expression nextExpression(Tokenizer tokenizer) throws IOException {
