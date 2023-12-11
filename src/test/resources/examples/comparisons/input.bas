@@ -1,9 +1,9 @@
 10 A = 1
 50 FOR N = 0 TO 2
-60 IF A < N THEN PRINT "A < " N
-70 IF A <= N THEN PRINT "A <= " N
-80 IF A = N THEN PRINT "A = " N
-90 IF A <> N THEN PRINT "A <> " N
-100 IF A >= N THEN PRINT "A >= " N
-110 IF A > N THEN PRINT "A > " N
+60 IF A < N THEN PRINT "A < " ; N
+70 IF A <= N THEN PRINT "A <= " ; N
+80 IF A = N THEN PRINT "A = " ; N
+90 IF A <> N THEN PRINT "A <> " ; N
+100 IF A >= N THEN PRINT "A >= " ; N
+110 IF A > N THEN PRINT "A > " ; N
 120 NEXT

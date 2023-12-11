@@ -13,6 +13,6 @@
 130 PRINT "Nested loop"
 140 FOR I = 1 TO 3
 150  FOR J = 2 TO 4
-160   PRINT I " " J
+160   PRINT I ; " " ; J
 170  NEXT J
 180 NEXT I

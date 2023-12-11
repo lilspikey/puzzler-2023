@@ -2,6 +2,7 @@ import ast.AstVisitor;
 import ast.BinaryExpression;
 import ast.DataType;
 import ast.EndStatement;
+import ast.Expression;
 import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
@@ -22,7 +23,9 @@ import ast.GotoStatement;
 import ast.IfStatement;
 import ast.Line;
 import ast.NextStatement;
+import ast.PrintSeperator;
 import ast.PrintStatement;
+import ast.Printable;
 import ast.Program;
 import ast.StringConstant;
 import org.objectweb.asm.ClassReader;
@@ -151,23 +154,33 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(PrintStatement statement) {
         addCallback(methodVisitor -> {
-            for (var expression: statement.expressions()) {
+            Printable lastPrintable = null;
+            for (var printable: statement.printables()) {
+                if (printable == PrintSeperator.ZONE) {
+                    methodVisitor.visitVarInsn(ALOAD, 0);
+                    methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                        className,
+                        "nextPrintZone",
+                        "()V");
+                } else if (printable != PrintSeperator.NONE) {
+                    var expression = (Expression) printable;
+                    methodVisitor.visitVarInsn(ALOAD, 0);
+                    expression.visit(this);
+                    var paramDescriptor = toDescriptorString(expression.getDataType());
+                    methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                            className,
+                            "print",
+                            String.format("(%s)V", paramDescriptor));
+                }
+                lastPrintable = printable;
+            }
+            if (lastPrintable != PrintSeperator.NONE && lastPrintable != PrintSeperator.ZONE) {
                 methodVisitor.visitVarInsn(ALOAD, 0);
-                expression.visit(this);
-                var paramDescriptor = switch (expression.getDataType()) {
-                    case FLOAT -> "(F)V";
-                    case STRING -> "(Ljava/lang/String;)V";
-                };
                 methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
                         className,
-                        "print",
-                        paramDescriptor);
+                        "println",
+                        "()V");
             }
-            methodVisitor.visitVarInsn(ALOAD, 0);
-            methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
-                    className,
-                    "println",
-                    "()V");
         });
     }
 

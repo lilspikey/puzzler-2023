@@ -11,6 +11,7 @@ import java.util.Scanner;
  without having to manually create lots of byte code
  */
 public class BasRuntime implements Runnable {
+    private static final int PRINT_ZONE_WIDTH = 14;
     // these are here so we can swap them out in tests
     private InputStream in = System.in;
     private PrintStream out = System.out;
@@ -38,12 +39,23 @@ public class BasRuntime implements Runnable {
     }
 
     void print(float f) {
-        print(MessageFormat.format("{0,number,0.###}", f));
+        print(formatFloat(f));
+    }
+
+    void nextPrintZone() {
+        var nextZone = currentTab % 14;
+        for (var i = 0; i < nextZone; i++) {
+            print(" ");
+        }
     }
 
     void println() {
         out.println();
         currentTab = 0;
+    }
+
+    private String formatFloat(float f) {
+        return MessageFormat.format("{0,number,0.###}", f);
     }
 
     float inputFloat() {

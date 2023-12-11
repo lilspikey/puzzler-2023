@@ -1,7 +1,7 @@
 10 A = 2
 20 B = 0
 20 FOR N = 0 TO 3
-30 IF A > N THEN PRINT "A > " N : B = A
+30 IF A > N THEN PRINT "A > " ; N : B = A
 40 NEXT
 50 IF B = A THEN 70
 60 PRINT "B <> A"

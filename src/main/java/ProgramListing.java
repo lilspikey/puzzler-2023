@@ -1,6 +1,7 @@
 import ast.AstVisitor;
 import ast.BinaryExpression;
 import ast.EndStatement;
+import ast.Expression;
 import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
@@ -21,9 +22,9 @@ import ast.GotoStatement;
 import ast.IfStatement;
 import ast.Line;
 import ast.NextStatement;
+import ast.PrintSeperator;
 import ast.PrintStatement;
 import ast.RemarkStatement;
-import ast.Statement;
 import ast.StringConstant;
 
 /*
@@ -50,9 +51,14 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(PrintStatement statement) {
         System.out.print("PRINT ");
-        for (var expression: statement.expressions()) {
-            expression.visit(this);
-            System.out.print(' ');
+        for (var printable: statement.printables()) {
+            if (printable == PrintSeperator.NONE) {
+                System.out.println(";");
+            } else if (printable == PrintSeperator.ZONE) {
+                System.out.println(",");
+            } else {
+                ((Expression) printable).visit(this);
+            }
         }
     }
 

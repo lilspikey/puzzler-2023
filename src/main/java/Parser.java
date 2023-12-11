@@ -22,7 +22,9 @@ import ast.GotoStatement;
 import ast.IfStatement;
 import ast.Line;
 import ast.NextStatement;
+import ast.PrintSeperator;
 import ast.PrintStatement;
+import ast.Printable;
 import ast.Program;
 import ast.RemarkStatement;
 import ast.Statement;
@@ -32,6 +34,7 @@ import runtime.FunctionDef;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -167,7 +170,7 @@ public class Parser {
 
     private PrintStatement nextPrintStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.PRINT);
-        var expressions = new ArrayList<Expression>();
+        var printables = new ArrayList<Printable>();
         var done = false;
         while (!done) {
             var next = tokenizer.peek();
@@ -177,12 +180,34 @@ public class Parser {
                     if (next.type() == Token.Type.SYMBOL && ":".equals(next.text())) {
                         done = true;
                     } else {
-                        expressions.add(nextExpression(tokenizer));
+                        var expression = nextExpression(tokenizer);
+                        printables.add(expression);
+                        var peek = tokenizer.peek();
+                        if (peek.type() == Token.Type.SYMBOL) {
+                            switch (peek.text()) {
+                                case ";" -> {
+                                    nextExpectedSymbol(tokenizer, ";");
+                                    printables.add(PrintSeperator.NONE);
+                                }
+                                case "," -> {
+                                    nextExpectedSymbol(tokenizer, ",");
+                                    printables.add(PrintSeperator.ZONE);
+                                }
+                                case ":" -> {
+                                    done = true;
+                                }
+                                default -> {
+                                    throw parseError("Unexpected symbol: " + peek);
+                                }
+                            }
+                        } else if (peek.type() != Token.Type.EOL && peek.type() != Token.Type.EOF){
+                            throw parseError("Unexpected symbol: " + peek);
+                        }
                     }
                 }
             }
         }
-        return new PrintStatement(expressions);
+        return new PrintStatement(printables);
     }
 
     private EndStatement nextEndStatement(Tokenizer tokenizer) throws IOException {
@@ -286,10 +311,10 @@ public class Parser {
         return new FloatAssignment(name.text(), expression);
     }
 
-    private void peekExpectedKeyword(Tokenizer tokenizer, Keyword expected) throws IOException {
+    private void peekExpectedKeyword(Tokenizer tokenizer, Keyword... expected) throws IOException {
         var token = tokenizer.peek();
-        if (token.type() != Token.Type.KEYWORD || token.asKeyword() != expected) {
-            throw parseError("Expected " + expected + " got: " + token);
+        if (token.type() != Token.Type.KEYWORD || !Arrays.asList(expected).contains(token.asKeyword())) {
+            throw parseError("Expected " + Arrays.asList(expected) + " got: " + token);
         }
     }
 

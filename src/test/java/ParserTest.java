@@ -6,6 +6,7 @@ import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.IfStatement;
 import ast.Line;
+import ast.PrintSeperator;
 import ast.PrintStatement;
 import ast.Program;
 import ast.StringConstant;
@@ -203,6 +204,24 @@ class ParserTest {
                     List.of(
                         new PrintStatement(List.of()),
                         new PrintStatement(List.of(new StringConstant("hi")))
+                    )
+                )
+            )),
+            program
+        );
+    }
+
+    @Test
+    public void givenPrint_whenParsing_thenProgramReturned() throws IOException {
+        Parser parser = new Parser();
+        Program program = parser.parse(new StringReader(
+            "100 PRINT \"hi\";"
+        ));
+        assertEquals(
+            new Program(List.of(
+                new Line("100",
+                    List.of(
+                        new PrintStatement(List.of(new StringConstant("hi"), PrintSeperator.NONE))
                     )
                 )
             )),
