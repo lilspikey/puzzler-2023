@@ -9,7 +9,7 @@ import ast.FloatDivision;
 import ast.FloatEquals;
 import ast.FloatGreaterThan;
 import ast.FloatGreaterThanEquals;
-import ast.FloatInput;
+import ast.InputStatement;
 import ast.FloatLessThan;
 import ast.FloatLessThanEquals;
 import ast.FloatMultiplication;
@@ -84,7 +84,7 @@ public class ProgramListing implements AstVisitor {
     }
 
     @Override
-    public void visit(FloatInput statement) {
+    public void visit(InputStatement statement) {
         System.out.print("INPUT " + statement.name());
     }
 

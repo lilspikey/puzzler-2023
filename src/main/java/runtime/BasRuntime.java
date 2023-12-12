@@ -71,12 +71,17 @@ public class BasRuntime implements Runnable {
         return MessageFormat.format("{0,number,0.###}", f);
     }
 
-    float inputFloat() {
+    float inputFLOAT() {
         var in = new Scanner(this.in);
         while (!in.hasNextFloat()) {
             in.next();
         }
         return in.nextFloat();
+    }
+
+    String inputSTRING() {
+        var in = new Scanner(this.in);
+        return in.nextLine();
     }
 
     @Override

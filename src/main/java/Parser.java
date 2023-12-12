@@ -8,7 +8,6 @@ import ast.FloatDivision;
 import ast.FloatEquals;
 import ast.FloatGreaterThan;
 import ast.FloatGreaterThanEquals;
-import ast.FloatInput;
 import ast.FloatLessThan;
 import ast.FloatLessThanEquals;
 import ast.FloatMultiplication;
@@ -20,6 +19,7 @@ import ast.ForStatement;
 import ast.FunctionCall;
 import ast.GotoStatement;
 import ast.IfStatement;
+import ast.InputStatement;
 import ast.Line;
 import ast.NextStatement;
 import ast.PrintSeperator;
@@ -129,7 +129,7 @@ public class Parser {
                 default -> throw parseError("Unexpected token:" + first);
             };
         } else if (first.type() == Token.Type.NAME) {
-            return switch (fromName(first.text())) {
+            return switch (DataType.fromVarName(first.text())) {
                 case FLOAT -> nextFloatAssignment(tokenizer);
                 case STRING -> nextStringAssignment(tokenizer);
             };
@@ -272,17 +272,10 @@ public class Parser {
 
     private Expression nextVariable(Tokenizer tokenizer) throws IOException {
         var name = tokenizer.next().text();
-        return switch (fromName(name)) {
+        return switch (DataType.fromVarName(name)) {
             case FLOAT -> new FloatVariable(name);
             case STRING -> new StringVariable(name);
         };
-    }
-
-    private DataType fromName(String name) {
-        if (name.endsWith("$")) {
-            return DataType.STRING;
-        }
-        return DataType.FLOAT;
     }
 
     private FunctionCall nextFunctionCall(Tokenizer tokenizer) throws IOException {
@@ -325,10 +318,10 @@ public class Parser {
         return new IfStatement(predicate);
     }
 
-    private FloatInput nextInputStatement(Tokenizer tokenizer) throws IOException {
+    private InputStatement nextInputStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.INPUT);
         var name = nextExpectedName(tokenizer);
-        return new FloatInput(name.text());
+        return new InputStatement(name.text());
     }
 
     private FloatAssignment nextFloatAssignment(Tokenizer tokenizer) throws IOException {

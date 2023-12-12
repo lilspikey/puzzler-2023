@@ -10,7 +10,6 @@ import ast.FloatDivision;
 import ast.FloatEquals;
 import ast.FloatGreaterThan;
 import ast.FloatGreaterThanEquals;
-import ast.FloatInput;
 import ast.FloatLessThan;
 import ast.FloatLessThanEquals;
 import ast.FloatMultiplication;
@@ -22,6 +21,7 @@ import ast.ForStatement;
 import ast.FunctionCall;
 import ast.GotoStatement;
 import ast.IfStatement;
+import ast.InputStatement;
 import ast.Line;
 import ast.NextStatement;
 import ast.PrintSeperator;
@@ -271,15 +271,21 @@ public class JavaASM implements AstVisitor {
     }
 
     @Override
-    public void visit(FloatInput statement) {
+    public void visit(InputStatement statement) {
         var index = getLocalVarIndex(statement.name());
         addCallback(methodVisitor -> {
+            var dataType = DataType.fromVarName(statement.name());
+            var returnType = toDescriptorString(dataType);
             methodVisitor.visitVarInsn(ALOAD, 0);
             methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
                     className,
-                    "inputFloat",
-                    "()F");
-            methodVisitor.visitVarInsn(FSTORE, index);
+                    "input" + dataType,
+                    "()" + returnType);
+            var store = switch (dataType) {
+                case FLOAT -> FSTORE;
+                case STRING -> ASTORE;
+            };
+            methodVisitor.visitVarInsn(store, index);
         });
     }
 

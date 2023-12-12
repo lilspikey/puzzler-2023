@@ -27,7 +27,7 @@ public interface AstVisitor {
 
     void visit(FloatAssignment statement);
 
-    void visit(FloatInput statement);
+    void visit(InputStatement statement);
 
     void visit(StringAssignment statement);
 
