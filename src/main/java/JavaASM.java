@@ -14,6 +14,7 @@ import ast.FloatInput;
 import ast.FloatLessThan;
 import ast.FloatLessThanEquals;
 import ast.FloatMultiplication;
+import ast.FloatNegation;
 import ast.FloatNotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
@@ -64,6 +65,7 @@ import static org.objectweb.asm.Opcodes.FCONST_0;
 import static org.objectweb.asm.Opcodes.FDIV;
 import static org.objectweb.asm.Opcodes.FLOAD;
 import static org.objectweb.asm.Opcodes.FMUL;
+import static org.objectweb.asm.Opcodes.FNEG;
 import static org.objectweb.asm.Opcodes.FSTORE;
 import static org.objectweb.asm.Opcodes.FSUB;
 import static org.objectweb.asm.Opcodes.GOTO;
@@ -301,6 +303,12 @@ public class JavaASM implements AstVisitor {
     public void visit(FloatVariable expression) {
         var index = getLocalFloatVarIndex(expression.name());
         currentMethodVisitor.visitVarInsn(FLOAD, index);
+    }
+
+    @Override
+    public void visit(FloatNegation expression) {
+        expression.expr().visit(this);
+        currentMethodVisitor.visitInsn(FNEG);
     }
 
     @Override

@@ -13,6 +13,7 @@ import ast.FloatInput;
 import ast.FloatLessThan;
 import ast.FloatLessThanEquals;
 import ast.FloatMultiplication;
+import ast.FloatNegation;
 import ast.FloatNotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
@@ -29,6 +30,7 @@ import ast.Program;
 import ast.RemarkStatement;
 import ast.Statement;
 import ast.StringConstant;
+import ast.UnaryExpression;
 import runtime.FunctionDef;
 
 import java.io.IOException;
@@ -44,17 +46,21 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Parser {
-    private final Map<String, OperatorInfo> operators = Map.of(
-        "=", new OperatorInfo(1, FloatEquals::new),
-        "<>", new OperatorInfo(1, FloatNotEquals::new),
-        ">", new OperatorInfo(1, FloatGreaterThan::new),
-        ">=", new OperatorInfo(1, FloatGreaterThanEquals::new),
-        "<", new OperatorInfo(1, FloatLessThan::new),
-        "<=", new OperatorInfo(1, FloatLessThanEquals::new),
-        "+", new OperatorInfo(2, FloatAddition::new),
-        "-", new OperatorInfo(2, FloatSubtraction::new),
-        "*", new OperatorInfo(3, FloatMultiplication::new),
-        "/", new OperatorInfo(4, FloatDivision::new)
+    private final Map<String, UnaryOperatorInfo> unaryOperators = Map.of(
+        "-", new UnaryOperatorInfo(5, FloatNegation::new),
+        "+", new UnaryOperatorInfo(5, Function.identity())
+    );
+    private final Map<String, BinaryOperatorInfo> binaryOperators = Map.of(
+        "=", new BinaryOperatorInfo(1, FloatEquals::new),
+        "<>", new BinaryOperatorInfo(1, FloatNotEquals::new),
+        ">", new BinaryOperatorInfo(1, FloatGreaterThan::new),
+        ">=", new BinaryOperatorInfo(1, FloatGreaterThanEquals::new),
+        "<", new BinaryOperatorInfo(1, FloatLessThan::new),
+        "<=", new BinaryOperatorInfo(1, FloatLessThanEquals::new),
+        "+", new BinaryOperatorInfo(2, FloatAddition::new),
+        "-", new BinaryOperatorInfo(2, FloatSubtraction::new),
+        "*", new BinaryOperatorInfo(3, FloatMultiplication::new),
+        "/", new BinaryOperatorInfo(4, FloatDivision::new)
     );
 
     private final Map<String, FunctionDef> functions = FunctionDef.getFunctionDefs().stream()
@@ -223,8 +229,8 @@ public class Parser {
         var lhs = nextAtomExpression(tokenizer);
         while (true) {
             var maybeOp = tokenizer.peek();
-            if (maybeOp.type() == Token.Type.SYMBOL && operators.containsKey(maybeOp.text())) {
-                var operatorInfo = operators.get(maybeOp.text());
+            if (maybeOp.type() == Token.Type.SYMBOL && binaryOperators.containsKey(maybeOp.text())) {
+                var operatorInfo = binaryOperators.get(maybeOp.text());
                 if (operatorInfo.precedence() < minPrecedence) {
                     break;
                 }
@@ -246,6 +252,12 @@ public class Parser {
             case NAME -> new FloatVariable(tokenizer.next().text());
             case FUNCTION -> nextFunctionCall(tokenizer);
             case SYMBOL -> {
+                if (unaryOperators.containsKey(token.text())) {
+                    var unaryToken = nextExpectedSymbol(tokenizer);
+                    var unaryOperator = unaryOperators.get(unaryToken.text());
+                    var expression = nextExpression(tokenizer, unaryOperator.precedence());
+                    yield unaryOperator.newOperator().apply(expression);
+                }
                 if ("(".equals(token.text())) {
                     yield nextSubExpression(tokenizer);
                 }
@@ -369,7 +381,11 @@ public class Parser {
         return new IllegalStateException("Line " + currentLineNumber + ": " + message);
     }
 
-    record OperatorInfo(int precedence, BiFunction<Expression, Expression, BinaryExpression> newOperator) {
+    record BinaryOperatorInfo(int precedence, BiFunction<Expression, Expression, Expression> newOperator) {
+
+    }
+
+    record UnaryOperatorInfo(int precedence, Function<Expression, Expression> newOperator) {
 
     }
 }

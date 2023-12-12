@@ -2,6 +2,7 @@ import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatMultiplication;
+import ast.FloatNegation;
 import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.IfStatement;
@@ -227,6 +228,30 @@ class ParserTest {
             )),
             program
         );
+    }
+
+    @Test
+    public void givenUnaryExpressions_whenParsing_thenProgramReturned() throws IOException {
+        Parser parser = new Parser();
+        Program program = parser.parse(new StringReader(
+            "100 A = -2 + -3 * +7"
+        ));
+        assertEquals(
+            new Program(List.of(
+                new Line("100",
+                    List.of(
+                        new FloatAssignment("A",
+                            new FloatAddition(
+                                new FloatNegation(new FloatConstant(2.0f)),
+                                new FloatMultiplication(new FloatNegation(new FloatConstant(3.0f)), new FloatConstant(7.0f))
+                            )
+                        )
+                    )
+                )
+            )),
+            program
+        );
+
     }
 
 }

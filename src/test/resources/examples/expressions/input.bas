@@ -10,3 +10,6 @@
 100 PRINT "A + B * C - D = " ; A + B * C - D
 110 PRINT "A + (B * C) - D = " ; A + (B * C) - D
 120 PRINT "(A + B) * (C - D) = " ; (A + B) * (C - D)
+130 PRINT "-A + +B * -C - D = " ; -A + +B * -C - D
+140 PRINT "-(A) + (+(B) * -(C)) - D = " ; -(A) + (+(B) * -(C)) - D
+150 PRINT "(-A + +B) * -(C - D) = " ; (-A + +B) * -(C - D)

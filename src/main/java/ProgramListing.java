@@ -13,6 +13,7 @@ import ast.FloatInput;
 import ast.FloatLessThan;
 import ast.FloatLessThanEquals;
 import ast.FloatMultiplication;
+import ast.FloatNegation;
 import ast.FloatNotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
@@ -128,6 +129,13 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(FloatVariable expression) {
         System.out.print(expression.name());
+    }
+
+    @Override
+    public void visit(FloatNegation expression) {
+        System.out.print("-(");
+        expression.expr().visit(this);
+        System.out.print(")");
     }
 
     @Override

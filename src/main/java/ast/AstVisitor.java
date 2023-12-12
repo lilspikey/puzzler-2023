@@ -35,6 +35,8 @@ public interface AstVisitor {
 
     void visit(FloatVariable expression);
 
+    void visit(FloatNegation expression);
+
     void visit(FloatEquals expression);
 
     void visit(FloatNotEquals expression);
