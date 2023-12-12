@@ -6,13 +6,13 @@ import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.Equals;
-import ast.FloatGreaterThan;
-import ast.FloatGreaterThanEquals;
-import ast.FloatLessThan;
-import ast.FloatLessThanEquals;
+import ast.GreaterThan;
+import ast.GreaterThanEquals;
+import ast.LessThan;
+import ast.LessThanEquals;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
-import ast.FloatNotEquals;
+import ast.NotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.ForStatement;
@@ -52,11 +52,11 @@ public class Parser {
     );
     private final Map<String, BinaryOperatorInfo> binaryOperators = Map.of(
         "=", new BinaryOperatorInfo(1, Equals::new),
-        "<>", new BinaryOperatorInfo(1, FloatNotEquals::new),
-        ">", new BinaryOperatorInfo(1, FloatGreaterThan::new),
-        ">=", new BinaryOperatorInfo(1, FloatGreaterThanEquals::new),
-        "<", new BinaryOperatorInfo(1, FloatLessThan::new),
-        "<=", new BinaryOperatorInfo(1, FloatLessThanEquals::new),
+        "<>", new BinaryOperatorInfo(1, NotEquals::new),
+        ">", new BinaryOperatorInfo(1, GreaterThan::new),
+        ">=", new BinaryOperatorInfo(1, GreaterThanEquals::new),
+        "<", new BinaryOperatorInfo(1, LessThan::new),
+        "<=", new BinaryOperatorInfo(1, LessThanEquals::new),
         "+", new BinaryOperatorInfo(2, FloatAddition::new),
         "-", new BinaryOperatorInfo(2, FloatSubtraction::new),
         "*", new BinaryOperatorInfo(3, FloatMultiplication::new),

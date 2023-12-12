@@ -2,28 +2,28 @@ import ast.AstVisitor;
 import ast.BinaryExpression;
 import ast.DataType;
 import ast.EndStatement;
+import ast.Equals;
 import ast.Expression;
 import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
-import ast.Equals;
-import ast.FloatGreaterThan;
-import ast.FloatGreaterThanEquals;
-import ast.FloatLessThan;
-import ast.FloatLessThanEquals;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
-import ast.FloatNotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.ForStatement;
 import ast.FunctionCall;
 import ast.GotoStatement;
+import ast.GreaterThan;
+import ast.GreaterThanEquals;
 import ast.IfStatement;
 import ast.InputStatement;
+import ast.LessThan;
+import ast.LessThanEquals;
 import ast.Line;
 import ast.NextStatement;
+import ast.NotEquals;
 import ast.PrintSeperator;
 import ast.PrintStatement;
 import ast.Printable;
@@ -338,40 +338,44 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(Equals expression) {
         visitExpressions(expression);
+        comparison(expression, IFEQ);
+    }
+
+    @Override
+    public void visit(NotEquals expression) {
+        visitExpressions(expression);
+        comparison(expression, IFNE);
+    }
+
+    @Override
+    public void visit(GreaterThan expression) {
+        visitExpressions(expression);
+        comparison(expression, IFGT);
+    }
+
+    @Override
+    public void visit(GreaterThanEquals expression) {
+        visitExpressions(expression);
+        comparison(expression, IFGE);
+    }
+
+    @Override
+    public void visit(LessThan expression) {
+        visitExpressions(expression);
+        comparison(expression, IFLT);
+    }
+
+    @Override
+    public void visit(LessThanEquals expression) {
+        visitExpressions(expression);
+        comparison(expression, IFLE);
+    }
+
+    private void comparison(Expression expression, int opcode) {
         switch (expression.getDataType()) {
-            case FLOAT -> floatComparison(IFEQ);
-            case STRING -> stringComparison(IFEQ);
+            case FLOAT -> floatComparison(opcode);
+            case STRING -> stringComparison(opcode);
         }
-    }
-
-    @Override
-    public void visit(FloatNotEquals expression) {
-        visitExpressions(expression);
-        floatComparison(IFNE);
-    }
-
-    @Override
-    public void visit(FloatGreaterThan expression) {
-        visitExpressions(expression);
-        floatComparison(IFGT);
-    }
-
-    @Override
-    public void visit(FloatGreaterThanEquals expression) {
-        visitExpressions(expression);
-        floatComparison(IFGE);
-    }
-
-    @Override
-    public void visit(FloatLessThan expression) {
-        visitExpressions(expression);
-        floatComparison(IFLT);
-    }
-
-    @Override
-    public void visit(FloatLessThanEquals expression) {
-        visitExpressions(expression);
-        floatComparison(IFLE);
     }
 
     private void floatComparison(int opcode) {

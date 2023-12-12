@@ -43,15 +43,15 @@ public interface AstVisitor {
 
     void visit(Equals expression);
 
-    void visit(FloatNotEquals expression);
+    void visit(NotEquals expression);
 
-    void visit(FloatGreaterThan expression);
+    void visit(GreaterThan expression);
 
-    void visit(FloatGreaterThanEquals expression);
+    void visit(GreaterThanEquals expression);
 
-    void visit(FloatLessThan expression);
+    void visit(LessThan expression);
 
-    void visit(FloatLessThanEquals expression);
+    void visit(LessThanEquals expression);
 
     void visit(FloatAddition expression);
 

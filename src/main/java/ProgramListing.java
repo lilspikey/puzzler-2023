@@ -7,14 +7,14 @@ import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.Equals;
-import ast.FloatGreaterThan;
-import ast.FloatGreaterThanEquals;
+import ast.GreaterThan;
+import ast.GreaterThanEquals;
 import ast.InputStatement;
-import ast.FloatLessThan;
-import ast.FloatLessThanEquals;
+import ast.LessThan;
+import ast.LessThanEquals;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
-import ast.FloatNotEquals;
+import ast.NotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.ForStatement;
@@ -157,27 +157,27 @@ public class ProgramListing implements AstVisitor {
     }
 
     @Override
-    public void visit(FloatNotEquals expression) {
+    public void visit(NotEquals expression) {
         binaryExpression("<>", expression);
     }
 
     @Override
-    public void visit(FloatGreaterThan expression) {
+    public void visit(GreaterThan expression) {
         binaryExpression(">", expression);
     }
 
     @Override
-    public void visit(FloatGreaterThanEquals expression) {
+    public void visit(GreaterThanEquals expression) {
         binaryExpression(">=", expression);
     }
 
     @Override
-    public void visit(FloatLessThan expression) {
+    public void visit(LessThan expression) {
         binaryExpression("<", expression);
     }
 
     @Override
-    public void visit(FloatLessThanEquals expression) {
+    public void visit(LessThanEquals expression) {
         binaryExpression("<=", expression);
     }
 
