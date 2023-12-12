@@ -88,6 +88,7 @@ public class JavaASM implements AstVisitor {
     private final AtomicInteger nextLocalVarIndex = new AtomicInteger(1);
     private final Map<String, Integer> localVarIndexes = new HashMap<>();
     private final Map<String, Label> linesToLabels = new HashMap<>();
+    private Label endLabel;
     private final Deque<OpenForStatement> openForStatements = new ArrayDeque<>();
     private final List<Consumer<MethodVisitor>> methodCallbacks = new ArrayList<>();
     private final NavigableSet<Line> lines = new TreeSet<>(Comparator.comparing(Line::numericLabel));
@@ -139,7 +140,12 @@ public class JavaASM implements AstVisitor {
     public void visit(Program program) {
         lines.clear();
         lines.addAll(program.lines());
+        endLabel = new Label();
         AstVisitor.super.visit(program);
+        addCallback(methodVisitor -> {
+            methodVisitor.visitLabel(endLabel);
+            methodVisitor.visitInsn(RETURN);
+        });
     }
 
     @Override
@@ -478,7 +484,10 @@ public class JavaASM implements AstVisitor {
     }
 
     private Label nextLineLabel(Line line) {
-        var nextLine = Objects.requireNonNull(lines.higher(line), "Could not find line after: " + line);
+        var nextLine = lines.higher(line);
+        if (nextLine == null) {
+            return endLabel;
+        }
         return linesToLabels.get(nextLine.label());
     }
 
