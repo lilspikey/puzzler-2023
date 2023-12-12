@@ -29,7 +29,11 @@ public interface AstVisitor {
 
     void visit(FloatInput statement);
 
+    void visit(StringAssignment statement);
+
     void visit(StringConstant expression);
+
+    void visit(StringVariable expression);
 
     void visit(FloatConstant expression);
 

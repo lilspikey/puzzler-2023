@@ -28,7 +28,9 @@ import ast.PrintSeperator;
 import ast.PrintStatement;
 import ast.Printable;
 import ast.Program;
+import ast.StringAssignment;
 import ast.StringConstant;
+import ast.StringVariable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -57,6 +59,7 @@ import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM4;
+import static org.objectweb.asm.Opcodes.ASTORE;
 import static org.objectweb.asm.Opcodes.DUP2;
 import static org.objectweb.asm.Opcodes.F2I;
 import static org.objectweb.asm.Opcodes.FADD;
@@ -83,7 +86,7 @@ import static org.objectweb.asm.Opcodes.RETURN;
 public class JavaASM implements AstVisitor {
     private String className;
     private final AtomicInteger nextLocalVarIndex = new AtomicInteger(1);
-    private final Map<String, Integer> localFloatVarIndexes = new HashMap<>();
+    private final Map<String, Integer> localVarIndexes = new HashMap<>();
     private final Map<String, Label> linesToLabels = new HashMap<>();
     private final Deque<OpenForStatement> openForStatements = new ArrayDeque<>();
     private final List<Consumer<MethodVisitor>> methodCallbacks = new ArrayList<>();
@@ -210,7 +213,7 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(ForStatement statement) {
         openForStatements.add(new OpenForStatement(currentLine, statement));
-        var index = getLocalFloatVarIndex(statement.varname());
+        var index = getLocalVarIndex(statement.varname());
         addCallback(methodVisitor -> {
             statement.start().visit(this);
             methodVisitor.visitVarInsn(FSTORE, index);
@@ -232,7 +235,7 @@ public class JavaASM implements AstVisitor {
             // copy end + increment from stack
             methodVisitor.visitInsn(DUP2);
             // add increment
-            var varIndex = getLocalFloatVarIndex(forStatement.varname());
+            var varIndex = getLocalVarIndex(forStatement.varname());
             methodVisitor.visitVarInsn(FLOAD, varIndex);
             methodVisitor.visitInsn(FADD);
             methodVisitor.visitVarInsn(FSTORE, varIndex);
@@ -269,7 +272,7 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(FloatInput statement) {
-        var index = getLocalFloatVarIndex(statement.name());
+        var index = getLocalVarIndex(statement.name());
         addCallback(methodVisitor -> {
             methodVisitor.visitVarInsn(ALOAD, 0);
             methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
@@ -282,10 +285,19 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(FloatAssignment statement) {
-        var index = getLocalFloatVarIndex(statement.name());
+        var index = getLocalVarIndex(statement.name());
         addCallback(methodVisitor -> {
             statement.expression().visit(this);
             methodVisitor.visitVarInsn(FSTORE, index);
+        });
+    }
+
+    @Override
+    public void visit(StringAssignment statement) {
+        var index = getLocalVarIndex(statement.name());
+        addCallback(methodVisitor -> {
+            statement.expression().visit(this);
+            methodVisitor.visitVarInsn(ASTORE, index);
         });
     }
 
@@ -301,8 +313,14 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(FloatVariable expression) {
-        var index = getLocalFloatVarIndex(expression.name());
+        var index = getLocalVarIndex(expression.name());
         currentMethodVisitor.visitVarInsn(FLOAD, index);
+    }
+
+    @Override
+    public void visit(StringVariable expression) {
+        var index = getLocalVarIndex(expression.name());
+        currentMethodVisitor.visitVarInsn(ALOAD, index);
     }
 
     @Override
@@ -426,8 +444,8 @@ public class JavaASM implements AstVisitor {
         methodCallbacks.add(callback);
     }
 
-    private int getLocalFloatVarIndex(String name) {
-        return localFloatVarIndexes.computeIfAbsent(name, n -> nextLocalVarIndex.getAndIncrement());
+    private int getLocalVarIndex(String name) {
+        return localVarIndexes.computeIfAbsent(name, n -> nextLocalVarIndex.getAndIncrement());
     }
 
     private Label nextLineLabel(Line line) {

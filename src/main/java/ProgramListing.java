@@ -26,7 +26,9 @@ import ast.NextStatement;
 import ast.PrintSeperator;
 import ast.PrintStatement;
 import ast.RemarkStatement;
+import ast.StringAssignment;
 import ast.StringConstant;
+import ast.StringVariable;
 
 /*
  Just a simple visitor to walk the AST and print it out
@@ -117,8 +119,19 @@ public class ProgramListing implements AstVisitor {
     }
 
     @Override
+    public void visit(StringAssignment statement) {
+        System.out.print(statement.name() + " = ");
+        statement.expression().visit(this);
+    }
+
+    @Override
     public void visit(StringConstant expression) {
         System.out.print('\"' + expression.constant() + '\"');
+    }
+
+    @Override
+    public void visit(StringVariable expression) {
+        System.out.print(expression.name());
     }
 
     @Override

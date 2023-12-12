@@ -1,4 +1,3 @@
-import ast.BinaryExpression;
 import ast.DataType;
 import ast.EndStatement;
 import ast.Expression;
@@ -29,8 +28,9 @@ import ast.Printable;
 import ast.Program;
 import ast.RemarkStatement;
 import ast.Statement;
+import ast.StringAssignment;
 import ast.StringConstant;
-import ast.UnaryExpression;
+import ast.StringVariable;
 import runtime.FunctionDef;
 
 import java.io.IOException;
@@ -129,7 +129,10 @@ public class Parser {
                 default -> throw parseError("Unexpected token:" + first);
             };
         } else if (first.type() == Token.Type.NAME) {
-            return nextFloatAssignment(tokenizer);
+            return switch (fromName(first.text())) {
+                case FLOAT -> nextFloatAssignment(tokenizer);
+                case STRING -> nextStringAssignment(tokenizer);
+            };
         }
         throw parseError("Unexpected token: " + first);
     }
@@ -249,7 +252,7 @@ public class Parser {
         return switch (token.type()) {
             case STRING -> new StringConstant(tokenizer.next().text());
             case NUMBER -> new FloatConstant(Float.parseFloat(tokenizer.next().text()));
-            case NAME -> new FloatVariable(tokenizer.next().text());
+            case NAME -> nextVariable(tokenizer);
             case FUNCTION -> nextFunctionCall(tokenizer);
             case SYMBOL -> {
                 if (unaryOperators.containsKey(token.text())) {
@@ -265,6 +268,21 @@ public class Parser {
             }
             default -> throw parseError("Unexpected token: " + tokenizer.peek());
         };
+    }
+
+    private Expression nextVariable(Tokenizer tokenizer) throws IOException {
+        var name = tokenizer.next().text();
+        return switch (fromName(name)) {
+            case FLOAT -> new FloatVariable(name);
+            case STRING -> new StringVariable(name);
+        };
+    }
+
+    private DataType fromName(String name) {
+        if (name.endsWith("$")) {
+            return DataType.STRING;
+        }
+        return DataType.FLOAT;
     }
 
     private FunctionCall nextFunctionCall(Tokenizer tokenizer) throws IOException {
@@ -321,6 +339,16 @@ public class Parser {
             throw parseError("Expected float expression, but got: " + expression);
         }
         return new FloatAssignment(name.text(), expression);
+    }
+
+    private StringAssignment nextStringAssignment(Tokenizer tokenizer) throws IOException {
+        var name = nextExpectedName(tokenizer);
+        nextExpectedSymbol(tokenizer, "=");
+        Expression expression = nextExpression(tokenizer);
+        if (expression.getDataType() != DataType.STRING) {
+            throw parseError("Expected string expression, but got: " + expression);
+        }
+        return new StringAssignment(name.text(), expression);
     }
 
     private void peekExpectedKeyword(Tokenizer tokenizer, Keyword... expected) throws IOException {
