@@ -19,6 +19,7 @@ public class Tokenizer {
             .distinct()
             .map(ch -> String.valueOf((char) (int) ch))
             .collect(Collectors.joining());
+    private static final String NAME_SUFFIXES = "$";
     private final Set<String> keywords = Arrays.stream(Keyword.values())
         .map(String::valueOf)
         .collect(Collectors.toSet());
@@ -72,6 +73,13 @@ public class Tokenizer {
                 if (isFunction(text)) {
                     return new Token(text, Token.Type.FUNCTION);
                 }
+                var suffix = reader.read();
+                if (NAME_SUFFIXES.indexOf(suffix) != -1) {
+                    text += (char) suffix;
+                } else {
+                    unreadIfNotEOF(suffix);
+                }
+
                 return new Token(text, Token.Type.NAME);
             }
             if (isNumeric(c)) {
@@ -110,9 +118,7 @@ public class Tokenizer {
             if (c != -1 && SYMBOLS.contains(builder.toString() + (char) c)) {
                 builder.append((char) c);
             } else {
-                if (c != -1) {
-                    reader.unread(c);
-                }
+                unreadIfNotEOF(c);
                 break;
             }
         }
@@ -126,9 +132,7 @@ public class Tokenizer {
             if (c != -1 && charTest.test((char) c)) {
                 builder.append((char) c);
             } else {
-                if (c != -1) {
-                    reader.unread(c);
-                }
+                unreadIfNotEOF(c);
                 break;
             }
             if (tokenTest.test(builder)) {
@@ -136,6 +140,12 @@ public class Tokenizer {
             }
         }
         return builder.toString();
+    }
+
+    private void unreadIfNotEOF(int c) throws IOException {
+        if (c != -1) {
+            reader.unread(c);
+        }
     }
 
     private boolean isKeyword(String text) {

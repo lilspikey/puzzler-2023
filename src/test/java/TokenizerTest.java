@@ -113,6 +113,20 @@ class TokenizerTest {
     }
 
     @Test
+    void givenNames_whenTokenizing_thenTokensReturned() throws IOException {
+        assertEquals(
+            List.of(
+                new Token("A", Token.Type.NAME),
+                new Token("A$", Token.Type.NAME),
+                new Token("BA", Token.Type.NAME),
+                new Token("BA$", Token.Type.NAME),
+                new Token(null, Token.Type.EOF)
+            ),
+            tokenize("A A$ BA BA$")
+        );
+    }
+
+    @Test
     void givenUnknownCharacters_whenTokenizing_thenExceptionThrown() throws IOException {
         var ex = assertThrows(TokenizingException.class, () -> tokenize("£"));
         assertEquals("Unexpected character: £", ex.getMessage());
