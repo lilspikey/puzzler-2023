@@ -5,7 +5,7 @@ import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
-import ast.FloatEquals;
+import ast.Equals;
 import ast.FloatGreaterThan;
 import ast.FloatGreaterThanEquals;
 import ast.FloatLessThan;
@@ -51,7 +51,7 @@ public class Parser {
         "+", new UnaryOperatorInfo(5, Function.identity())
     );
     private final Map<String, BinaryOperatorInfo> binaryOperators = Map.of(
-        "=", new BinaryOperatorInfo(1, FloatEquals::new),
+        "=", new BinaryOperatorInfo(1, Equals::new),
         "<>", new BinaryOperatorInfo(1, FloatNotEquals::new),
         ">", new BinaryOperatorInfo(1, FloatGreaterThan::new),
         ">=", new BinaryOperatorInfo(1, FloatGreaterThanEquals::new),

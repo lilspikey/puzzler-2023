@@ -7,7 +7,7 @@ import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
-import ast.FloatEquals;
+import ast.Equals;
 import ast.FloatGreaterThan;
 import ast.FloatGreaterThanEquals;
 import ast.FloatLessThan;
@@ -336,9 +336,12 @@ public class JavaASM implements AstVisitor {
     }
 
     @Override
-    public void visit(FloatEquals expression) {
+    public void visit(Equals expression) {
         visitExpressions(expression);
-        floatComparison(IFEQ);
+        switch (expression.getDataType()) {
+            case FLOAT -> floatComparison(IFEQ);
+            case STRING -> stringComparison(IFEQ);
+        }
     }
 
     @Override
@@ -373,6 +376,22 @@ public class JavaASM implements AstVisitor {
 
     private void floatComparison(int opcode) {
         currentMethodVisitor.visitInsn(FCMPG);
+        // spec wants 0 for true and -1 for false
+        // using IF* and GOTO like this seems to be
+        // pretty much what Java itself uses for boolean expressions
+        compareToTruthFloat(opcode);
+    }
+
+    private void stringComparison(int opcode) {
+        currentMethodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+            "java/lang/String",
+            "compareTo",
+            String.format("(%s)I", String.class.descriptorString())
+        );
+        compareToTruthFloat(opcode);
+    }
+
+    private void compareToTruthFloat(int opcode) {
         // spec wants 0 for true and -1 for false
         // using IF* and GOTO like this seems to be
         // pretty much what Java itself uses for boolean expressions

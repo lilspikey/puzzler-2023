@@ -10,4 +10,11 @@ public enum DataType {
         }
         return DataType.FLOAT;
     }
+
+    public static DataType ensureSame(DataType lhs, DataType rhs) {
+        if (lhs != rhs) {
+            throw new IllegalArgumentException(lhs + " != " + rhs);
+        }
+        return lhs;
+    }
 }
