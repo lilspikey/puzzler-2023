@@ -16,7 +16,8 @@ class FunctionDefTest {
             Set.of(
                 new FunctionDef("INT", DataType.FLOAT, List.of(DataType.FLOAT)),
                 new FunctionDef("SIN", DataType.FLOAT, List.of(DataType.FLOAT)),
-                new FunctionDef("TAB", DataType.STRING, List.of(DataType.FLOAT))
+                new FunctionDef("TAB", DataType.STRING, List.of(DataType.FLOAT)),
+                new FunctionDef("RND", DataType.FLOAT, List.of(DataType.FLOAT))
             ),
             FunctionDef.getFunctionDefs()
         );

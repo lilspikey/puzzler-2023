@@ -3,6 +3,7 @@ package runtime;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.text.MessageFormat;
+import java.util.Random;
 import java.util.Scanner;
 
 /*
@@ -16,6 +17,8 @@ public class BasRuntime implements Runnable {
     private InputStream in = System.in;
     private PrintStream out = System.out;
     private int currentTab = 0;
+    private Random random = new Random();
+    private float prevRandom;
 
     float fnINT(float f) {
         return (int) f;
@@ -23,6 +26,16 @@ public class BasRuntime implements Runnable {
 
     float fnSIN(float f) {
         return (float) Math.sin(Math.toRadians(f));
+    }
+
+    float fnRND(float f) {
+        if (f < 0.0f) {
+            random = new Random((int) f);
+        }
+        if (f == 0.0f) {
+            return prevRandom;
+        }
+        return (prevRandom = random.nextFloat());
     }
 
     String fnTAB(float f) {
