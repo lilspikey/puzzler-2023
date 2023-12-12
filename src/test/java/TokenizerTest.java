@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TokenizerTest {
 
@@ -109,6 +110,12 @@ class TokenizerTest {
             ),
             tokenize("INT")
         );
+    }
+
+    @Test
+    void givenUnknownCharacters_whenTokenizing_thenExceptionThrown() throws IOException {
+        var ex = assertThrows(TokenizingException.class, () -> tokenize("£"));
+        assertEquals("Unexpected character: £", ex.getMessage());
     }
 
     private List<Token> tokenize(String code) throws IOException {

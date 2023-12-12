@@ -44,17 +44,17 @@ class ParserTest {
         Parser parser = new Parser();
         Program program = parser.parse(new StringReader(
             "100 A = 1\n" +
-            "200 PRINT \"A = \" A\n" +
+            "200 PRINT \"A = \" ; A\n" +
             "300 B = A\n" +
-            "400 PRINT \"B = \" B"
+            "400 PRINT \"B = \" ; B"
         ));
         assertEquals(
             new Program(
                 List.of(
                     new Line("100", List.of(new FloatAssignment("A", new FloatConstant(1.0f)))),
-                    new Line("200", List.of(new PrintStatement(List.of(new StringConstant("A = "), new FloatVariable("A"))))),
+                    new Line("200", List.of(new PrintStatement(List.of(new StringConstant("A = "), PrintSeperator.NONE, new FloatVariable("A"))))),
                     new Line("300", List.of(new FloatAssignment("B", new FloatVariable("A")))),
-                    new Line("400", List.of(new PrintStatement(List.of(new StringConstant("B = "), new FloatVariable("B")))))
+                    new Line("400", List.of(new PrintStatement(List.of(new StringConstant("B = "), PrintSeperator.NONE, new FloatVariable("B")))))
                 )
             ),
             program

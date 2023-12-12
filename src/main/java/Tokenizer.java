@@ -87,10 +87,11 @@ public class Tokenizer {
             if (c == '\"') {
                 String text = consumeAllMatching(ch -> ch != '\"');
                 if (reader.read() != '\"') {
-                    throw new IllegalStateException("Expected end of string");
+                    throw new TokenizingException("Expected end of string");
                 }
                 return new Token(text, Token.Type.STRING);
             }
+            throw new TokenizingException("Unexpected character: " + (char) c);
         }
     }
 
@@ -109,7 +110,9 @@ public class Tokenizer {
             if (c != -1 && SYMBOLS.contains(builder.toString() + (char) c)) {
                 builder.append((char) c);
             } else {
-                reader.unread(c);
+                if (c != -1) {
+                    reader.unread(c);
+                }
                 break;
             }
         }
@@ -123,7 +126,9 @@ public class Tokenizer {
             if (c != -1 && charTest.test((char) c)) {
                 builder.append((char) c);
             } else {
-                reader.unread(c);
+                if (c != -1) {
+                    reader.unread(c);
+                }
                 break;
             }
             if (tokenTest.test(builder)) {
