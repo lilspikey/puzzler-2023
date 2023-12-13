@@ -58,9 +58,9 @@ public class ProgramListing implements AstVisitor {
         System.out.print("PRINT ");
         for (var printable: statement.printables()) {
             if (printable == PrintSeperator.NONE) {
-                System.out.println(";");
+                System.out.print(";");
             } else if (printable == PrintSeperator.ZONE) {
-                System.out.println(",");
+                System.out.print(",");
             } else {
                 ((Expression) printable).visit(this);
             }
