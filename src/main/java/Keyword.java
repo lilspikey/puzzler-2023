@@ -10,5 +10,6 @@ public enum Keyword {
     STEP,
     NEXT,
     END,
-    DATA
+    DATA,
+    READ
 }

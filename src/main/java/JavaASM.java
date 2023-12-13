@@ -29,6 +29,7 @@ import ast.PrintSeperator;
 import ast.PrintStatement;
 import ast.Printable;
 import ast.Program;
+import ast.ReadStatement;
 import ast.StringAssignment;
 import ast.StringConstant;
 import ast.StringVariable;
@@ -52,7 +53,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
-import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -81,6 +81,7 @@ import static org.objectweb.asm.Opcodes.IFGT;
 import static org.objectweb.asm.Opcodes.IFLE;
 import static org.objectweb.asm.Opcodes.IFLT;
 import static org.objectweb.asm.Opcodes.IFNE;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.NOP;
 import static org.objectweb.asm.Opcodes.POP2;
@@ -225,6 +226,27 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(DataStatement statement) {
         dataConstants.addAll(statement.constants());
+    }
+
+    @Override
+    public void visit(ReadStatement statement) {
+        for (var name: statement.names()) {
+            var index = getLocalVarIndex(name);
+            addCallback(methodVisitor -> {
+                var dataType = DataType.fromVarName(name);
+                var returnType = toDescriptorString(dataType);
+                methodVisitor.visitVarInsn(ALOAD, 0);
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                        className,
+                        "read" + dataType,
+                        "()" + returnType);
+                var store = switch (dataType) {
+                    case FLOAT -> FSTORE;
+                    case STRING -> ASTORE;
+                };
+                methodVisitor.visitVarInsn(store, index);
+            });
+        }
     }
 
     @Override
@@ -493,7 +515,15 @@ public class JavaASM implements AstVisitor {
         for (var i = 0; i < dataConstants.size(); i++) {
             methodVisitor.visitInsn(DUP);
             methodVisitor.visitLdcInsn(i);
-            methodVisitor.visitLdcInsn(dataConstants.get(i));
+            var constant = dataConstants.get(i);
+            methodVisitor.visitLdcInsn(constant);
+            // need to box float as Float object
+            if (constant instanceof Float) {
+                methodVisitor.visitMethodInsn(INVOKESTATIC,
+                    "java/lang/Float",
+                    "valueOf",
+                    "(F)Ljava/lang/Float;");
+            }
             methodVisitor.visitInsn(AASTORE);
         }
         methodVisitor.visitFieldInsn(PUTFIELD, className, "data", "[" + Object.class.descriptorString());

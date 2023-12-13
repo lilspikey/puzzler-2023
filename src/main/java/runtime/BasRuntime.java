@@ -20,6 +20,7 @@ public class BasRuntime implements Runnable {
     private Random random = new Random();
     private float prevRandom;
     private Object[] data;
+    private int nextDataPtr = 0;
 
     float fnINT(float f) {
         return (int) f;
@@ -45,6 +46,16 @@ public class BasRuntime implements Runnable {
             builder.append(' ');
         }
         return builder.toString();
+    }
+
+    float readFLOAT() {
+        var data = this.data[nextDataPtr++];
+        return (Float) data;
+    }
+
+    String readSTRING() {
+        var data = this.data[nextDataPtr++];
+        return (String) data;
     }
 
     void print(String s) {

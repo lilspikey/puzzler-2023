@@ -1,0 +1,5 @@
+10 READ A$, B, C
+20 PRINT A$
+30 PRINT B
+40 PRINT C
+30 DATA "Hi There", 10, 20

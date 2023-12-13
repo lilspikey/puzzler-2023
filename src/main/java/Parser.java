@@ -1,32 +1,33 @@
 import ast.DataStatement;
 import ast.DataType;
 import ast.EndStatement;
+import ast.Equals;
 import ast.Expression;
 import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
-import ast.Equals;
-import ast.GreaterThan;
-import ast.GreaterThanEquals;
-import ast.LessThan;
-import ast.LessThanEquals;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
-import ast.NotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.ForStatement;
 import ast.FunctionCall;
 import ast.GotoStatement;
+import ast.GreaterThan;
+import ast.GreaterThanEquals;
 import ast.IfStatement;
 import ast.InputStatement;
+import ast.LessThan;
+import ast.LessThanEquals;
 import ast.Line;
 import ast.NextStatement;
+import ast.NotEquals;
 import ast.PrintSeperator;
 import ast.PrintStatement;
 import ast.Printable;
 import ast.Program;
+import ast.ReadStatement;
 import ast.RemarkStatement;
 import ast.Statement;
 import ast.StringAssignment;
@@ -127,6 +128,7 @@ public class Parser {
                 case FOR -> nextForStatement(tokenizer);
                 case NEXT -> nextNextStatement(tokenizer);
                 case DATA -> nextDataStatement(tokenizer);
+                case READ -> nextReadStatement(tokenizer);
                 case END -> nextEndStatement(tokenizer);
                 default -> throw parseError("Unexpected token:" + first);
             };
@@ -248,6 +250,28 @@ public class Parser {
             }
         }
         return new DataStatement(constants);
+    }
+
+    private ReadStatement nextReadStatement(Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.READ);
+        var names = new ArrayList<String>();
+        var done = false;
+        var first = true;
+        while (!done) {
+            var next = tokenizer.peek();
+            switch (next.type()) {
+                case EOL, EOF -> done = true;
+                default -> {
+                    if (!first) {
+                        nextExpectedSymbol(tokenizer, ",");
+                    }
+                    first = false;
+                    var name = nextExpectedName(tokenizer).text();
+                    names.add(name);
+                }
+            }
+        }
+        return new ReadStatement(names);
     }
 
     private EndStatement nextEndStatement(Tokenizer tokenizer) throws IOException {

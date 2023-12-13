@@ -2,30 +2,31 @@ import ast.AstVisitor;
 import ast.BinaryExpression;
 import ast.DataStatement;
 import ast.EndStatement;
+import ast.Equals;
 import ast.Expression;
 import ast.FloatAddition;
 import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
-import ast.Equals;
-import ast.GreaterThan;
-import ast.GreaterThanEquals;
-import ast.InputStatement;
-import ast.LessThan;
-import ast.LessThanEquals;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
-import ast.NotEquals;
 import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.ForStatement;
 import ast.FunctionCall;
 import ast.GotoStatement;
+import ast.GreaterThan;
+import ast.GreaterThanEquals;
 import ast.IfStatement;
+import ast.InputStatement;
+import ast.LessThan;
+import ast.LessThanEquals;
 import ast.Line;
 import ast.NextStatement;
+import ast.NotEquals;
 import ast.PrintSeperator;
 import ast.PrintStatement;
+import ast.ReadStatement;
 import ast.RemarkStatement;
 import ast.StringAssignment;
 import ast.StringConstant;
@@ -109,6 +110,11 @@ public class ProgramListing implements AstVisitor {
             }
             first = false;
         }
+    }
+
+    @Override
+    public void visit(ReadStatement statement) {
+        System.out.print("READ " + String.join(",", statement.names()));
     }
 
     @Override
