@@ -19,6 +19,7 @@ public class BasRuntime implements Runnable {
     private int currentTab = 0;
     private Random random = new Random();
     private float prevRandom;
+    private Object[] data;
 
     float fnINT(float f) {
         return (int) f;

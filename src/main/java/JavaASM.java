@@ -1,5 +1,6 @@
 import ast.AstVisitor;
 import ast.BinaryExpression;
+import ast.DataStatement;
 import ast.DataType;
 import ast.EndStatement;
 import ast.Equals;
@@ -57,9 +58,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static org.objectweb.asm.Opcodes.AASTORE;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM4;
 import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.DUP2;
 import static org.objectweb.asm.Opcodes.F2I;
 import static org.objectweb.asm.Opcodes.FADD;
@@ -81,10 +84,12 @@ import static org.objectweb.asm.Opcodes.IFNE;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.NOP;
 import static org.objectweb.asm.Opcodes.POP2;
+import static org.objectweb.asm.Opcodes.PUTFIELD;
 import static org.objectweb.asm.Opcodes.RETURN;
 
 public class JavaASM implements AstVisitor {
     private String className;
+    private final List<Object> dataConstants = new ArrayList<>();
     private final AtomicInteger nextLocalVarIndex = new AtomicInteger(1);
     private final Map<String, Integer> localVarIndexes = new HashMap<>();
     private final Map<String, Label> linesToLabels = new HashMap<>();
@@ -112,6 +117,7 @@ public class JavaASM implements AstVisitor {
                 if ("run".equals(name)) {
                     currentMethodVisitor = methodVisitor;
                     methodVisitor.visitCode();
+                    storeDataConstants(methodVisitor);
                     for (var callback: methodCallbacks) {
                         callback.accept(methodVisitor);
                     }
@@ -214,6 +220,11 @@ public class JavaASM implements AstVisitor {
             // NB logic is inverted 0 = true and -1 = false
             methodVisitor.visitJumpInsn(IFNE, nextLineLabel(currentLine));
         });
+    }
+
+    @Override
+    public void visit(DataStatement statement) {
+        dataConstants.addAll(statement.constants());
     }
 
     @Override
@@ -473,6 +484,19 @@ public class JavaASM implements AstVisitor {
     private void visitExpressions(BinaryExpression expression) {
         expression.lhs().visit(this);
         expression.rhs().visit(this);
+    }
+
+    private void storeDataConstants(MethodVisitor methodVisitor) {
+        methodVisitor.visitVarInsn(ALOAD, 0);
+        methodVisitor.visitLdcInsn(dataConstants.size());
+        methodVisitor.visitMultiANewArrayInsn("["+Object.class.descriptorString(), 1);
+        for (var i = 0; i < dataConstants.size(); i++) {
+            methodVisitor.visitInsn(DUP);
+            methodVisitor.visitLdcInsn(i);
+            methodVisitor.visitLdcInsn(dataConstants.get(i));
+            methodVisitor.visitInsn(AASTORE);
+        }
+        methodVisitor.visitFieldInsn(PUTFIELD, className, "data", "[" + Object.class.descriptorString());
     }
 
     private void addCallback(Consumer<MethodVisitor> callback) {

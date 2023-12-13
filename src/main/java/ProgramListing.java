@@ -1,5 +1,6 @@
 import ast.AstVisitor;
 import ast.BinaryExpression;
+import ast.DataStatement;
 import ast.EndStatement;
 import ast.Expression;
 import ast.FloatAddition;
@@ -91,6 +92,23 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(RemarkStatement statement) {
         System.out.print("REM " + statement.comment());
+    }
+
+    @Override
+    public void visit(DataStatement statement) {
+        System.out.print("DATA ");
+        var first = true;
+        for (var constant: statement.constants()) {
+            if (!first) {
+                System.out.print(",");
+            }
+            if (constant instanceof String) {
+                System.out.print("\"" + constant + "\"");
+            } else {
+                System.out.print(constant);
+            }
+            first = false;
+        }
     }
 
     @Override

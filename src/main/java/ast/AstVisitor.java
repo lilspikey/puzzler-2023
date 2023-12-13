@@ -19,6 +19,8 @@ public interface AstVisitor {
         // noop
     }
 
+    void visit(DataStatement statement);
+
     void visit(EndStatement statement);
 
     void visit(ForStatement statement);

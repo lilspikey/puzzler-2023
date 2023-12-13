@@ -1,3 +1,4 @@
+import ast.DataStatement;
 import ast.DataType;
 import ast.EndStatement;
 import ast.Expression;
@@ -125,6 +126,7 @@ public class Parser {
                 case REM -> nextComment(tokenizer);
                 case FOR -> nextForStatement(tokenizer);
                 case NEXT -> nextNextStatement(tokenizer);
+                case DATA -> nextDataStatement(tokenizer);
                 case END -> nextEndStatement(tokenizer);
                 default -> throw parseError("Unexpected token:" + first);
             };
@@ -217,6 +219,35 @@ public class Parser {
             }
         }
         return new PrintStatement(printables);
+    }
+
+    private DataStatement nextDataStatement(Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.DATA);
+        var constants = new ArrayList<>();
+        var done = false;
+        var first = true;
+        while (!done) {
+            var next = tokenizer.peek();
+            switch (next.type()) {
+                case EOL, EOF -> done = true;
+                default -> {
+                    if (!first) {
+                        nextExpectedSymbol(tokenizer, ",");
+                    }
+                    first = false;
+                    var constantToken = tokenizer.next();
+                    var constant = switch (constantToken.type()) {
+                        case NUMBER -> Float.parseFloat(constantToken.text());
+                        case STRING -> constantToken.text();
+                        default -> {
+                            throw parseError("Unexpected token: " + constantToken);
+                        }
+                    };
+                    constants.add(constant);
+                }
+            }
+        }
+        return new DataStatement(constants);
     }
 
     private EndStatement nextEndStatement(Tokenizer tokenizer) throws IOException {
