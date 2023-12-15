@@ -14,3 +14,10 @@ visitors are implemented:
 
 Theoretically it could be possible to have other visitors to generate
 other kinds of output.
+
+## Known limitations
+
+* GOSUB is not implemented as it would require the JSR and RET instructions, but it seems those are no longer used by the Java Compiler.
+  It does not seem easy (possible?) to use them in the Java ASM library
+  without a lot of work (messing with stack frames etc).
+* Pairing of FOR + NEXT is done statically at compile time
