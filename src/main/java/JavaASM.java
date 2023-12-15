@@ -50,9 +50,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -95,6 +97,7 @@ public class JavaASM implements AstVisitor {
     private final Map<String, Integer> localVarIndexes = new HashMap<>();
     private final Map<String, Label> linesToLabels = new HashMap<>();
     private Label endLabel;
+    private final Set<Label> targetLabels = new HashSet<>();
     private final Deque<OpenForStatement> openForStatements = new ArrayDeque<>();
     private final List<Consumer<MethodVisitor>> methodCallbacks = new ArrayList<>();
     private final NavigableSet<Line> lines = new TreeSet<>(Comparator.comparing(Line::numericLabel));
@@ -148,21 +151,24 @@ public class JavaASM implements AstVisitor {
         lines.clear();
         lines.addAll(program.lines());
         endLabel = new Label();
+        for (var line: program.lines()) {
+            var label = new Label();
+            linesToLabels.put(line.label(), label);
+        }
         AstVisitor.super.visit(program);
         addCallback(methodVisitor -> {
-            methodVisitor.visitLabel(endLabel);
+            visitLabelIfTargeted(methodVisitor, endLabel);
             methodVisitor.visitInsn(RETURN);
         });
     }
 
     @Override
     public void visit(Line line) {
-        var label = new Label();
-        linesToLabels.put(line.label(), label);
         currentLine = line;
         addCallback(methodVisitor -> {
             currentLine = line;
-            methodVisitor.visitLabel(label);
+            var label = linesToLabels.get(line.label());
+            visitLabelIfTargeted(methodVisitor, label);
         });
         for (var statement: line.statements()) {
             statement.visit(this);
@@ -204,22 +210,23 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(GotoStatement statement) {
+        var label = targetLineLabel(statement.destinationLabel());
+        if (label == null) {
+            throw new IllegalStateException("Unknown destination label: " + statement);
+        }
         addCallback(methodVisitor -> {
-            var label = linesToLabels.get(statement.destinationLabel());
-            if (label == null) {
-                throw new IllegalStateException("Unknown destination label: " + statement);
-            }
             methodVisitor.visitJumpInsn(GOTO, label);
         });
     }
 
     @Override
     public void visit(IfStatement statement) {
+        var label = targetNextLineLabel(currentLine);
         addCallback(methodVisitor -> {
             statement.predicate().visit(this);
             methodVisitor.visitInsn(F2I);
             // NB logic is inverted 0 = true and -1 = false
-            methodVisitor.visitJumpInsn(IFNE, nextLineLabel(currentLine));
+            methodVisitor.visitJumpInsn(IFNE, label);
         });
     }
 
@@ -269,6 +276,7 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(NextStatement statement) {
         var openFor = findMatchingForStatement(statement);
+        var label = targetNextLineLabel(openFor.line);
         addCallback(methodVisitor -> {
             var forStatement = openFor.forStatement();
             // copy end + increment from stack
@@ -281,7 +289,7 @@ public class JavaASM implements AstVisitor {
             // then compare end with the loop variable
             methodVisitor.visitVarInsn(FLOAD, varIndex);
             methodVisitor.visitInsn(FCMPG);
-            methodVisitor.visitJumpInsn(IFGE, nextLineLabel(openFor.line()));
+            methodVisitor.visitJumpInsn(IFGE, label);
             // loop finished, so remove end + increment from the stack
             methodVisitor.visitInsn(POP2);
         });
@@ -438,14 +446,14 @@ public class JavaASM implements AstVisitor {
         // spec wants 0 for true and -1 for false
         // using IF* and GOTO like this seems to be
         // pretty much what Java itself uses for boolean expressions
-        var trueLabel = new Label();
-        var falseLabel = new Label();
+        var trueLabel = newTargettedLabel();
+        var falseLabel = newTargettedLabel();
         currentMethodVisitor.visitJumpInsn(opcode, trueLabel);
         currentMethodVisitor.visitLdcInsn(-1.0f);
         currentMethodVisitor.visitJumpInsn(GOTO, falseLabel);
-        currentMethodVisitor.visitLabel(trueLabel);
+        visitLabelIfTargeted(currentMethodVisitor, trueLabel);
         currentMethodVisitor.visitInsn(FCONST_0);
-        currentMethodVisitor.visitLabel(falseLabel);
+        visitLabelIfTargeted(currentMethodVisitor, falseLabel);
         currentMethodVisitor.visitInsn(NOP);
     }
 
@@ -537,12 +545,34 @@ public class JavaASM implements AstVisitor {
         return localVarIndexes.computeIfAbsent(name, n -> nextLocalVarIndex.getAndIncrement());
     }
 
-    private Label nextLineLabel(Line line) {
+    private Label targetLineLabel(String lineLabel) {
+        var label = linesToLabels.get(lineLabel);
+        targetLabels.add(label);
+        return label;
+    }
+
+    private Label targetNextLineLabel(Line line) {
         var nextLine = lines.higher(line);
+        Label label;
         if (nextLine == null) {
-            return endLabel;
+            label = endLabel;
+        } else {
+            label = linesToLabels.get(nextLine.label());
         }
-        return linesToLabels.get(nextLine.label());
+        targetLabels.add(label);
+        return label;
+    }
+
+    private Label newTargettedLabel() {
+        var label = new Label();
+        targetLabels.add(label);
+        return label;
+    }
+
+    private void visitLabelIfTargeted(MethodVisitor methodVisitor, Label label) {
+        if (targetLabels.contains(label)) {
+            methodVisitor.visitLabel(label);
+        }
     }
 
     record OpenForStatement(Line line, ForStatement forStatement) {
