@@ -10,6 +10,7 @@ import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
+import ast.FloatPower;
 import ast.FloatSubtraction;
 import ast.ForStatement;
 import ast.FunctionCall;
@@ -70,8 +71,10 @@ import static org.objectweb.asm.Opcodes.AASTORE;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM4;
 import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.D2F;
 import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.DUP2;
+import static org.objectweb.asm.Opcodes.F2D;
 import static org.objectweb.asm.Opcodes.F2I;
 import static org.objectweb.asm.Opcodes.FADD;
 import static org.objectweb.asm.Opcodes.FALOAD;
@@ -581,6 +584,16 @@ public class JavaASM implements AstVisitor {
     public void visit(FloatDivision expression) {
         visitExpressions(expression);
         currentMethodVisitor.visitInsn(FDIV);
+    }
+
+    @Override
+    public void visit(FloatPower expression) {
+        expression.lhs().visit(this);
+        currentMethodVisitor.visitInsn(F2D);
+        expression.rhs().visit(this);
+        currentMethodVisitor.visitInsn(F2D);
+        currentMethodVisitor.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "pow", "(DD)D");
+        currentMethodVisitor.visitInsn(D2F);
     }
 
     @Override

@@ -67,5 +67,7 @@ public interface AstVisitor {
 
     void visit(FloatDivision expression);
 
+    void visit(FloatPower expression);
+
     void visit(FunctionCall expression);
 }

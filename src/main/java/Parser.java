@@ -8,6 +8,7 @@ import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
+import ast.FloatPower;
 import ast.FloatSubtraction;
 import ast.ForStatement;
 import ast.FunctionCall;
@@ -42,6 +43,7 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -54,18 +56,20 @@ public class Parser {
         "-", new UnaryOperatorInfo(5, FloatNegation::new),
         "+", new UnaryOperatorInfo(5, Function.identity())
     );
-    private final Map<String, BinaryOperatorInfo> binaryOperators = Map.of(
-        "=", new BinaryOperatorInfo(1, Equals::new),
-        "<>", new BinaryOperatorInfo(1, NotEquals::new),
-        ">", new BinaryOperatorInfo(1, GreaterThan::new),
-        ">=", new BinaryOperatorInfo(1, GreaterThanEquals::new),
-        "<", new BinaryOperatorInfo(1, LessThan::new),
-        "<=", new BinaryOperatorInfo(1, LessThanEquals::new),
-        "+", new BinaryOperatorInfo(2, FloatAddition::new),
-        "-", new BinaryOperatorInfo(2, FloatSubtraction::new),
-        "*", new BinaryOperatorInfo(3, FloatMultiplication::new),
-        "/", new BinaryOperatorInfo(4, FloatDivision::new)
-    );
+    private final Map<String, BinaryOperatorInfo> binaryOperators = new HashMap<>();
+    {
+        binaryOperators.put("=", new BinaryOperatorInfo(1, Associativity.LEFT, Equals::new));
+        binaryOperators.put("<>", new BinaryOperatorInfo(1, Associativity.LEFT, NotEquals::new));
+        binaryOperators.put(">", new BinaryOperatorInfo(1, Associativity.LEFT, GreaterThan::new));
+        binaryOperators.put(">=", new BinaryOperatorInfo(1, Associativity.LEFT, GreaterThanEquals::new));
+        binaryOperators.put("<", new BinaryOperatorInfo(1, Associativity.LEFT, LessThan::new));
+        binaryOperators.put("<=", new BinaryOperatorInfo(1, Associativity.LEFT, LessThanEquals::new));
+        binaryOperators.put("+", new BinaryOperatorInfo(2, Associativity.LEFT, FloatAddition::new));
+        binaryOperators.put("-", new BinaryOperatorInfo(2, Associativity.LEFT, FloatSubtraction::new));
+        binaryOperators.put("*", new BinaryOperatorInfo(3, Associativity.LEFT, FloatMultiplication::new));
+        binaryOperators.put("/", new BinaryOperatorInfo(4, Associativity.LEFT, FloatDivision::new));
+        binaryOperators.put("^", new BinaryOperatorInfo(5, Associativity.RIGHT, FloatPower::new));
+    }
 
     private final Map<String, FunctionDef> functions = FunctionDef.getFunctionDefs().stream()
         .collect(Collectors.toMap(FunctionDef::name, Function.identity()));
@@ -309,7 +313,11 @@ public class Parser {
                     break;
                 }
                 nextExpectedSymbol(tokenizer);
-                var rhs = nextExpression(tokenizer, operatorInfo.precedence() + 1);
+                var nextPrecedence = switch (operatorInfo.associativity()) {
+                    case LEFT -> operatorInfo.precedence() + 1;
+                    case RIGHT -> operatorInfo.precedence();
+                };
+                var rhs = nextExpression(tokenizer, nextPrecedence);
                 lhs = operatorInfo.newOperator.apply(lhs, rhs);
             } else {
                 break;
@@ -506,7 +514,11 @@ public class Parser {
         return new IllegalStateException("Line " + currentLineNumber + ": " + message);
     }
 
-    record BinaryOperatorInfo(int precedence, BiFunction<Expression, Expression, Expression> newOperator) {
+    enum Associativity {
+        LEFT, RIGHT;
+    }
+
+    record BinaryOperatorInfo(int precedence, Associativity associativity, BiFunction<Expression, Expression, Expression> newOperator) {
 
     }
 

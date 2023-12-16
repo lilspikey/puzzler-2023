@@ -9,6 +9,7 @@ import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
+import ast.FloatPower;
 import ast.FloatSubtraction;
 import ast.ForStatement;
 import ast.FunctionCall;
@@ -268,6 +269,11 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(FloatDivision expression) {
         binaryExpression("/", expression);
+    }
+
+    @Override
+    public void visit(FloatPower expression) {
+        binaryExpression("^", expression);
     }
 
     @Override
