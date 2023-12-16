@@ -35,11 +35,9 @@ public interface AstVisitor {
 
     void visit(NextStatement statement);
 
-    void visit(FloatAssignment statement);
+    void visit(LetStatement statement);
 
     void visit(InputStatement statement);
-
-    void visit(StringAssignment statement);
 
     void visit(StringConstant expression);
 

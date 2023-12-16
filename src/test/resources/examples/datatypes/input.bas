@@ -1,0 +1,3 @@
+10 LET A = 1
+20 LET A$ = "ONE"
+30 PRINT A, A$

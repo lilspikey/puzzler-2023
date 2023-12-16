@@ -1,16 +1,18 @@
+import ast.DataType;
 import ast.FloatAddition;
-import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
 import ast.FloatVariable;
 import ast.GotoStatement;
 import ast.IfStatement;
+import ast.LetStatement;
 import ast.Line;
 import ast.PrintSeperator;
 import ast.PrintStatement;
 import ast.Program;
 import ast.StringConstant;
+import ast.VarName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -51,9 +53,9 @@ class ParserTest {
         assertEquals(
             new Program(
                 List.of(
-                    new Line("100", List.of(new FloatAssignment("A", new FloatConstant(1.0f)))),
+                    new Line("100", List.of(new LetStatement(new VarName("A", DataType.FLOAT), new FloatConstant(1.0f)))),
                     new Line("200", List.of(new PrintStatement(List.of(new StringConstant("A = "), PrintSeperator.NONE, new FloatVariable("A"))))),
-                    new Line("300", List.of(new FloatAssignment("B", new FloatVariable("A")))),
+                    new Line("300", List.of(new LetStatement(new VarName("B", DataType.FLOAT), new FloatVariable("A")))),
                     new Line("400", List.of(new PrintStatement(List.of(new StringConstant("B = "), PrintSeperator.NONE, new FloatVariable("B")))))
                 )
             ),
@@ -72,9 +74,9 @@ class ParserTest {
         assertEquals(
             new Program(
                 List.of(
-                    new Line("100", List.of(new FloatAssignment("A", new FloatConstant(2.0f)))),
+                    new Line("100", List.of(new LetStatement(new VarName("A", DataType.FLOAT), new FloatConstant(2.0f)))),
                     new Line("200", List.of(
-                        new FloatAssignment("A",
+                        new LetStatement(new VarName("A", DataType.FLOAT),
                             new FloatAddition(
                                 new FloatAddition(
                                     new FloatVariable("A"), new FloatConstant(1.0f)
@@ -100,9 +102,9 @@ class ParserTest {
         assertEquals(
             new Program(
                 List.of(
-                    new Line("100", List.of(new FloatAssignment("A", new FloatConstant(2.0f)))),
+                    new Line("100", List.of(new LetStatement(new VarName("A", DataType.FLOAT), new FloatConstant(2.0f)))),
                     new Line("200", List.of(
-                        new FloatAssignment("A",
+                        new LetStatement(new VarName("A", DataType.FLOAT),
                             new FloatMultiplication(
                                 new FloatMultiplication(
                                     new FloatVariable("A"), new FloatConstant(1.0f)
@@ -128,9 +130,9 @@ class ParserTest {
         assertEquals(
             new Program(
                 List.of(
-                    new Line("100", List.of(new FloatAssignment("A", new FloatConstant(2.0f)))),
+                    new Line("100", List.of(new LetStatement(new VarName("A", DataType.FLOAT), new FloatConstant(2.0f)))),
                     new Line("200", List.of(
-                        new FloatAssignment("A",
+                        new LetStatement(new VarName("A", DataType.FLOAT),
                             new FloatAddition(
                                 new FloatVariable("A"),
                                 new FloatMultiplication(
@@ -155,7 +157,7 @@ class ParserTest {
         assertEquals(
             new Program(
                 List.of(
-                    new Line("100", List.of(new FloatAssignment("A", new FloatConstant(2.0f)))),
+                    new Line("100", List.of(new LetStatement(new VarName("A", DataType.FLOAT), new FloatConstant(2.0f)))),
                     new Line("200", List.of(
                         new IfStatement(new FloatVariable("A")),
                         new GotoStatement("100")
@@ -176,7 +178,7 @@ class ParserTest {
             new Program(
                 List.of(
                     new Line("100", List.of(
-                        new FloatAssignment("A", new FloatAddition(
+                        new LetStatement(new VarName("A", DataType.FLOAT), new FloatAddition(
                             new FloatAddition(
                                 new FloatMultiplication(
                                     new FloatAddition(new FloatConstant(1.0f), new FloatConstant(2.0f)),
@@ -240,7 +242,7 @@ class ParserTest {
             new Program(List.of(
                 new Line("100",
                     List.of(
-                        new FloatAssignment("A",
+                        new LetStatement(new VarName("A", DataType.FLOAT),
                             new FloatAddition(
                                 new FloatNegation(new FloatConstant(2.0f)),
                                 new FloatMultiplication(new FloatNegation(new FloatConstant(3.0f)), new FloatConstant(7.0f))

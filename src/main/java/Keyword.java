@@ -14,5 +14,6 @@ public enum Keyword {
     END,
     DATA,
     READ,
-    RESTORE
+    RESTORE,
+    LET
 }

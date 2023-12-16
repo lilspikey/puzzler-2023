@@ -4,7 +4,6 @@ import ast.EndStatement;
 import ast.Equals;
 import ast.Expression;
 import ast.FloatAddition;
-import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatMultiplication;
@@ -21,6 +20,7 @@ import ast.IfStatement;
 import ast.InputStatement;
 import ast.LessThan;
 import ast.LessThanEquals;
+import ast.LetStatement;
 import ast.Line;
 import ast.NextStatement;
 import ast.NotEquals;
@@ -33,9 +33,9 @@ import ast.RemarkStatement;
 import ast.RestoreStatement;
 import ast.ReturnStatement;
 import ast.Statement;
-import ast.StringAssignment;
 import ast.StringConstant;
 import ast.StringVariable;
+import ast.VarName;
 import runtime.FunctionDef;
 
 import java.io.IOException;
@@ -135,13 +135,11 @@ public class Parser {
                 case READ -> nextReadStatement(tokenizer);
                 case END -> nextEndStatement(tokenizer);
                 case RESTORE -> nextRestoreStatement(tokenizer);
+                case LET -> nextLetStatement(tokenizer);
                 default -> throw parseError("Unexpected token:" + first);
             };
         } else if (first.type() == Token.Type.NAME) {
-            return switch (DataType.fromVarName(first.text())) {
-                case FLOAT -> nextFloatAssignment(tokenizer);
-                case STRING -> nextStringAssignment(tokenizer);
-            };
+            return nextLetStatement(tokenizer);
         }
         throw parseError("Unexpected token: " + first);
     }
@@ -402,24 +400,23 @@ public class Parser {
         return new InputStatement(name.text());
     }
 
-    private FloatAssignment nextFloatAssignment(Tokenizer tokenizer) throws IOException {
-        var name = nextExpectedName(tokenizer);
+    private LetStatement nextLetStatement(Tokenizer tokenizer) throws IOException {
+        if (tokenizer.peek().type() == Token.Type.KEYWORD) {
+            nextExpectedKeyword(tokenizer, Keyword.LET);
+        }
+        var name = nextVarName(tokenizer);
         nextExpectedSymbol(tokenizer, "=");
         Expression expression = nextExpression(tokenizer);
-        if (expression.getDataType() != DataType.FLOAT) {
-            throw parseError("Expected float expression, but got: " + expression);
+        if (name.dataType() != expression.getDataType()) {
+            throw parseError("Expected " + name.dataType() + " expression, but got: " + expression);
         }
-        return new FloatAssignment(name.text(), expression);
+        return new LetStatement(name, expression);
     }
 
-    private StringAssignment nextStringAssignment(Tokenizer tokenizer) throws IOException {
-        var name = nextExpectedName(tokenizer);
-        nextExpectedSymbol(tokenizer, "=");
-        Expression expression = nextExpression(tokenizer);
-        if (expression.getDataType() != DataType.STRING) {
-            throw parseError("Expected string expression, but got: " + expression);
-        }
-        return new StringAssignment(name.text(), expression);
+    private VarName nextVarName(Tokenizer tokenizer) throws IOException {
+        var name = nextExpectedName(tokenizer).text();
+        var dataType = DataType.fromVarName(name);
+        return new VarName(name, dataType);
     }
 
     private void peekExpectedKeyword(Tokenizer tokenizer, Keyword... expected) throws IOException {

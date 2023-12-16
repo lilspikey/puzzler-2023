@@ -5,7 +5,6 @@ import ast.EndStatement;
 import ast.Equals;
 import ast.Expression;
 import ast.FloatAddition;
-import ast.FloatAssignment;
 import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatMultiplication;
@@ -22,6 +21,7 @@ import ast.IfStatement;
 import ast.InputStatement;
 import ast.LessThan;
 import ast.LessThanEquals;
+import ast.LetStatement;
 import ast.Line;
 import ast.NextStatement;
 import ast.NotEquals;
@@ -31,7 +31,6 @@ import ast.ReadStatement;
 import ast.RemarkStatement;
 import ast.RestoreStatement;
 import ast.ReturnStatement;
-import ast.StringAssignment;
 import ast.StringConstant;
 import ast.StringVariable;
 
@@ -93,7 +92,7 @@ public class ProgramListing implements AstVisitor {
     }
 
     @Override
-    public void visit(FloatAssignment statement) {
+    public void visit(LetStatement statement) {
         System.out.print(statement.name() + " = ");
         statement.expression().visit(this);
     }
@@ -161,12 +160,6 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(EndStatement statement) {
         System.out.print("END");
-    }
-
-    @Override
-    public void visit(StringAssignment statement) {
-        System.out.print(statement.name() + " = ");
-        statement.expression().visit(this);
     }
 
     @Override

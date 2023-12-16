@@ -6,7 +6,7 @@ import ast.EndStatement;
 import ast.Equals;
 import ast.Expression;
 import ast.FloatAddition;
-import ast.FloatAssignment;
+import ast.LetStatement;
 import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatMultiplication;
@@ -33,7 +33,6 @@ import ast.Program;
 import ast.ReadStatement;
 import ast.RestoreStatement;
 import ast.ReturnStatement;
-import ast.StringAssignment;
 import ast.StringConstant;
 import ast.StringVariable;
 import org.objectweb.asm.ClassReader;
@@ -403,20 +402,15 @@ public class JavaASM implements AstVisitor {
     }
 
     @Override
-    public void visit(FloatAssignment statement) {
-        var index = getLocalVarIndex(statement.name());
+    public void visit(LetStatement statement) {
+        var varName = statement.name();
+        var index = getLocalVarIndex(varName.name());
         addCallback(methodVisitor -> {
             statement.expression().visit(this);
-            methodVisitor.visitVarInsn(FSTORE, index);
-        });
-    }
-
-    @Override
-    public void visit(StringAssignment statement) {
-        var index = getLocalVarIndex(statement.name());
-        addCallback(methodVisitor -> {
-            statement.expression().visit(this);
-            methodVisitor.visitVarInsn(ASTORE, index);
+            switch (varName.dataType()) {
+                case FLOAT -> methodVisitor.visitVarInsn(FSTORE, index);
+                case STRING -> methodVisitor.visitVarInsn(ASTORE, index);
+            }
         });
     }
 
