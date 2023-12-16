@@ -89,6 +89,9 @@ public class Parser {
     }
 
     private Line nextLine(Tokenizer tokenizer) throws IOException {
+        while (tokenizer.peek().type() == Token.Type.EOL) {
+            tokenizer.next();
+        }
         if (tokenizer.peek().type() == Token.Type.EOF) {
             return null;
         }
