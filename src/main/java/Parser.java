@@ -9,7 +9,6 @@ import ast.FloatDivision;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
 import ast.FloatSubtraction;
-import ast.FloatVariable;
 import ast.ForStatement;
 import ast.FunctionCall;
 import ast.GoSubStatement;
@@ -34,8 +33,8 @@ import ast.RestoreStatement;
 import ast.ReturnStatement;
 import ast.Statement;
 import ast.StringConstant;
-import ast.StringVariable;
 import ast.VarName;
+import ast.Variable;
 import runtime.FunctionDef;
 
 import java.io.IOException;
@@ -338,11 +337,8 @@ public class Parser {
     }
 
     private Expression nextVariable(Tokenizer tokenizer) throws IOException {
-        var name = tokenizer.next().text();
-        return switch (DataType.fromVarName(name)) {
-            case FLOAT -> new FloatVariable(name);
-            case STRING -> new StringVariable(name);
-        };
+        var name = nextVarName(tokenizer);
+        return new Variable(name);
     }
 
     private FunctionCall nextFunctionCall(Tokenizer tokenizer) throws IOException {

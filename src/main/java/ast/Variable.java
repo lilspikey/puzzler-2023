@@ -1,10 +1,10 @@
 package ast;
 
-public record FloatVariable(String name) implements Expression {
+public record Variable(VarName name) implements Expression {
 
     @Override
     public DataType getDataType() {
-        return ast.DataType.FLOAT;
+        return name.dataType();
     }
 
     @Override

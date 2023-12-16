@@ -6,13 +6,11 @@ import ast.EndStatement;
 import ast.Equals;
 import ast.Expression;
 import ast.FloatAddition;
-import ast.LetStatement;
 import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
 import ast.FloatSubtraction;
-import ast.FloatVariable;
 import ast.ForStatement;
 import ast.FunctionCall;
 import ast.GoSubStatement;
@@ -23,6 +21,7 @@ import ast.IfStatement;
 import ast.InputStatement;
 import ast.LessThan;
 import ast.LessThanEquals;
+import ast.LetStatement;
 import ast.Line;
 import ast.NextStatement;
 import ast.NotEquals;
@@ -34,7 +33,7 @@ import ast.ReadStatement;
 import ast.RestoreStatement;
 import ast.ReturnStatement;
 import ast.StringConstant;
-import ast.StringVariable;
+import ast.Variable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -425,17 +424,14 @@ public class JavaASM implements AstVisitor {
     }
 
     @Override
-    public void visit(FloatVariable expression) {
-        var index = getLocalVarIndex(expression.name());
-        currentMethodVisitor.visitVarInsn(FLOAD, index);
+    public void visit(Variable expression) {
+        var varName = expression.name();
+        var index = getLocalVarIndex(varName.name());
+        switch (varName.dataType()) {
+            case FLOAT -> currentMethodVisitor.visitVarInsn(FLOAD, index);
+            case STRING -> currentMethodVisitor.visitVarInsn(ALOAD, index);
+        }
     }
-
-    @Override
-    public void visit(StringVariable expression) {
-        var index = getLocalVarIndex(expression.name());
-        currentMethodVisitor.visitVarInsn(ALOAD, index);
-    }
-
     @Override
     public void visit(FloatNegation expression) {
         expression.expr().visit(this);

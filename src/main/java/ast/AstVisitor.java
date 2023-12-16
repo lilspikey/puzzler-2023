@@ -41,11 +41,9 @@ public interface AstVisitor {
 
     void visit(StringConstant expression);
 
-    void visit(StringVariable expression);
-
     void visit(FloatConstant expression);
 
-    void visit(FloatVariable expression);
+    void visit(Variable expression);
 
     void visit(FloatNegation expression);
 

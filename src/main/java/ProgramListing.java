@@ -10,7 +10,6 @@ import ast.FloatDivision;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
 import ast.FloatSubtraction;
-import ast.FloatVariable;
 import ast.ForStatement;
 import ast.FunctionCall;
 import ast.GoSubStatement;
@@ -32,7 +31,7 @@ import ast.RemarkStatement;
 import ast.RestoreStatement;
 import ast.ReturnStatement;
 import ast.StringConstant;
-import ast.StringVariable;
+import ast.Variable;
 
 /*
  Just a simple visitor to walk the AST and print it out
@@ -168,17 +167,12 @@ public class ProgramListing implements AstVisitor {
     }
 
     @Override
-    public void visit(StringVariable expression) {
-        System.out.print(expression.name());
-    }
-
-    @Override
     public void visit(FloatConstant expression) {
         System.out.print(expression.constant());
     }
 
     @Override
-    public void visit(FloatVariable expression) {
+    public void visit(Variable expression) {
         System.out.print(expression.name());
     }
 
