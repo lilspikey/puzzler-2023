@@ -15,9 +15,13 @@ visitors are implemented:
 Theoretically it could be possible to have other visitors to generate
 other kinds of output.
 
-## Known limitations
+## Notes and limitations
 
-* GOSUB is not implemented as it would require the JSR and RET instructions, but it seems those are no longer used by the Java Compiler.
-  It does not seem easy (possible?) to use them in the Java ASM library
-  without a lot of work (messing with stack frames etc).
+* GOSUB is not implemented using the JSR and RET instructions. It seems those are no longer 
+  used by the Java Compiler. It does not seem easy (possible?) to use them in the Java ASM library
+  without a lot of work (messing with stack frames etc). So instead a fake approach is used
+  whe all GOSUBs are tracked and we push an int onto the stack which the RETURN statements use 
+  with a lookup switch instruction to jump back to the correct line.  For small numbers of GOSUB
+  statements this should be pretty quick/small, but as the number of GOSUBs increase we will be generating
+  more and more code for the RETURN.
 * Pairing of FOR + NEXT is done statically at compile time

@@ -14,6 +14,7 @@ import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.ForStatement;
 import ast.FunctionCall;
+import ast.GoSubStatement;
 import ast.GotoStatement;
 import ast.GreaterThan;
 import ast.GreaterThanEquals;
@@ -28,6 +29,7 @@ import ast.PrintSeperator;
 import ast.PrintStatement;
 import ast.ReadStatement;
 import ast.RemarkStatement;
+import ast.ReturnStatement;
 import ast.StringAssignment;
 import ast.StringConstant;
 import ast.StringVariable;
@@ -70,6 +72,16 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(GotoStatement statement) {
         System.out.print("GOTO " + statement.destinationLabel());
+    }
+
+    @Override
+    public void visit(GoSubStatement statement) {
+        System.out.print("GOSUB " + statement.destinationLabel());
+    }
+
+    @Override
+    public void visit(ReturnStatement statement) {
+        System.out.print("RETURN");
     }
 
     @Override

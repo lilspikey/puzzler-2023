@@ -13,6 +13,10 @@ public interface AstVisitor {
 
     void visit(GotoStatement statement);
 
+    void visit(GoSubStatement statement);
+
+    void visit(ReturnStatement statement);
+
     void visit(IfStatement statement);
 
     default void visit(RemarkStatement statement) {

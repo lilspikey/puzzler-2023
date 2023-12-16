@@ -13,6 +13,7 @@ import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.ForStatement;
 import ast.FunctionCall;
+import ast.GoSubStatement;
 import ast.GotoStatement;
 import ast.GreaterThan;
 import ast.GreaterThanEquals;
@@ -29,6 +30,7 @@ import ast.Printable;
 import ast.Program;
 import ast.ReadStatement;
 import ast.RemarkStatement;
+import ast.ReturnStatement;
 import ast.Statement;
 import ast.StringAssignment;
 import ast.StringConstant;
@@ -121,7 +123,8 @@ public class Parser {
         if (first.type() == Token.Type.KEYWORD) {
             return switch (first.asKeyword()) {
                 case PRINT -> nextPrintStatement(tokenizer);
-                case GO -> nextGotoStatement(tokenizer);
+                case GO -> nextGoStatement(tokenizer);
+                case RETURN -> newReturnStatement(tokenizer);
                 case IF -> nextIfStatement(tokenizer);
                 case INPUT -> nextInputStatement(tokenizer);
                 case REM -> nextComment(tokenizer);
@@ -359,11 +362,20 @@ public class Parser {
         return expression;
     }
 
-    private GotoStatement nextGotoStatement(Tokenizer tokenizer) throws IOException {
+    private Statement nextGoStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.GO);
-        nextExpectedKeyword(tokenizer, Keyword.TO);
+        var token = nextExpectedKeyword(tokenizer, Keyword.TO, Keyword.SUB);
         var destinationLabel = nextExpectedNumber(tokenizer);
-        return new GotoStatement(destinationLabel.text());
+        return switch (token.asKeyword()) {
+            case TO -> new GotoStatement(destinationLabel.text());
+            case SUB -> new GoSubStatement(destinationLabel.text());
+            default -> throw parseError("Unexpected token: " + token);
+        };
+    }
+
+    private ReturnStatement newReturnStatement(Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.RETURN);
+        return new ReturnStatement();
     }
 
     private IfStatement nextIfStatement(Tokenizer tokenizer) throws IOException {
@@ -406,11 +418,12 @@ public class Parser {
         }
     }
 
-    private void nextExpectedKeyword(Tokenizer tokenizer, Keyword expected) throws IOException {
+    private Token nextExpectedKeyword(Tokenizer tokenizer, Keyword... expected) throws IOException {
         var token = tokenizer.next();
-        if (token.type() != Token.Type.KEYWORD || token.asKeyword() != expected) {
-            throw parseError("Expected " + expected + " got: " + token);
+        if (token.type() != Token.Type.KEYWORD || !Arrays.asList(expected).contains(token.asKeyword())) {
+            throw parseError("Expected " + Arrays.asList(expected) + " got: " + token);
         }
+        return token;
     }
 
     private Token nextExpectedName(Tokenizer tokenizer) throws IOException {

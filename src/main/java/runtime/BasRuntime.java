@@ -96,6 +96,10 @@ public class BasRuntime implements Runnable {
         return in.nextLine();
     }
 
+    void runtimeError(String error) {
+        throw new RuntimeException(error);
+    }
+
     @Override
     public void run() {
 

@@ -15,6 +15,7 @@ import ast.FloatSubtraction;
 import ast.FloatVariable;
 import ast.ForStatement;
 import ast.FunctionCall;
+import ast.GoSubStatement;
 import ast.GotoStatement;
 import ast.GreaterThan;
 import ast.GreaterThanEquals;
@@ -30,6 +31,7 @@ import ast.PrintStatement;
 import ast.Printable;
 import ast.Program;
 import ast.ReadStatement;
+import ast.ReturnStatement;
 import ast.StringAssignment;
 import ast.StringConstant;
 import ast.StringVariable;
@@ -59,6 +61,7 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.objectweb.asm.Opcodes.AASTORE;
 import static org.objectweb.asm.Opcodes.ALOAD;
@@ -98,6 +101,7 @@ public class JavaASM implements AstVisitor {
     private final Map<String, Label> linesToLabels = new HashMap<>();
     private Label endLabel;
     private final Set<Label> targetLabels = new HashSet<>();
+    private final List<Label> returnLabels = new ArrayList<>();
     private final Deque<OpenForStatement> openForStatements = new ArrayDeque<>();
     private final List<Consumer<MethodVisitor>> methodCallbacks = new ArrayList<>();
     private final NavigableSet<Line> lines = new TreeSet<>(Comparator.comparing(Line::numericLabel));
@@ -216,6 +220,46 @@ public class JavaASM implements AstVisitor {
         }
         addCallback(methodVisitor -> {
             methodVisitor.visitJumpInsn(GOTO, label);
+        });
+    }
+
+    @Override
+    public void visit(GoSubStatement statement) {
+        // the JSR and RET instructions don't seem to want
+        // to work with newer Java veersions, so we'll fake it
+        // by pushing an int on the stack and generate a switch
+        // to go back to the correction calling location
+        var returnLabel = targetNextLineLabel(currentLine);
+        var returnIndex = returnLabels.size();
+        returnLabels.add(returnLabel);
+        var destinationLabel = targetLineLabel(statement.destinationLabel());
+        if (destinationLabel == null) {
+            throw new IllegalStateException("Unknown destination label: " + statement);
+        }
+        addCallback(methodVisitor -> {
+            methodVisitor.visitLdcInsn(returnIndex);
+            methodVisitor.visitJumpInsn(GOTO, destinationLabel);
+        });
+    }
+
+    @Override
+    public void visit(ReturnStatement statement) {
+        addCallback(methodVisitor -> {
+            if (returnLabels.isEmpty()) {
+                throw new IllegalStateException("No matching GOSUB for RETURN");
+            }
+            var defaultLabel = newTargettedLabel();
+            var keys = IntStream.range(0, returnLabels.size())
+                .toArray();
+            var labels = returnLabels.toArray(Label[]::new);
+            methodVisitor.visitLookupSwitchInsn(defaultLabel, keys, labels);
+            methodVisitor.visitLabel(defaultLabel);
+            methodVisitor.visitVarInsn(ALOAD, 0);
+            methodVisitor.visitLdcInsn("Calling GOSUB not found");
+            methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                    className,
+                    "runtimeError",
+                    "(Ljava/lang/String;)V");
         });
     }
 
