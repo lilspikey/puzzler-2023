@@ -33,6 +33,7 @@ import ast.ReadStatement;
 import ast.RestoreStatement;
 import ast.ReturnStatement;
 import ast.StringConstant;
+import ast.VarName;
 import ast.Variable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -285,7 +286,7 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(ReadStatement statement) {
         for (var varName: statement.names()) {
-            var index = getLocalVarIndex(varName.name());
+            createLocalVarIndex(varName);
             addCallback(methodVisitor -> {
                 var dataType = varName.dataType();
                 var returnType = toDescriptorString(dataType);
@@ -294,11 +295,7 @@ public class JavaASM implements AstVisitor {
                         className,
                         "read" + dataType,
                         "()" + returnType);
-                var store = switch (dataType) {
-                    case FLOAT -> FSTORE;
-                    case STRING -> ASTORE;
-                };
-                methodVisitor.visitVarInsn(store, index);
+                visitVarStore(methodVisitor, varName);
             });
         }
     }
@@ -384,7 +381,7 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(InputStatement statement) {
         var varName = statement.name();
-        var index = getLocalVarIndex(varName.name());
+        createLocalVarIndex(varName);
         addCallback(methodVisitor -> {
             var dataType = varName.dataType();
             var returnType = toDescriptorString(dataType);
@@ -393,25 +390,28 @@ public class JavaASM implements AstVisitor {
                     className,
                     "input" + dataType,
                     "()" + returnType);
-            var store = switch (dataType) {
-                case FLOAT -> FSTORE;
-                case STRING -> ASTORE;
-            };
-            methodVisitor.visitVarInsn(store, index);
+            visitVarStore(methodVisitor, varName);
         });
     }
 
     @Override
     public void visit(LetStatement statement) {
         var varName = statement.name();
-        var index = getLocalVarIndex(varName.name());
+        createLocalVarIndex(varName);
         addCallback(methodVisitor -> {
             statement.expression().visit(this);
-            switch (varName.dataType()) {
-                case FLOAT -> methodVisitor.visitVarInsn(FSTORE, index);
-                case STRING -> methodVisitor.visitVarInsn(ASTORE, index);
-            }
+            visitVarStore(methodVisitor, varName);
         });
+    }
+
+    private void visitVarStore(MethodVisitor methodVisitor, VarName varName) {
+        var index = getLocalVarIndex(varName.name());
+        var dataType = varName.dataType();
+        var store = switch (dataType) {
+            case FLOAT -> FSTORE;
+            case STRING -> ASTORE;
+        };
+        methodVisitor.visitVarInsn(store, index);
     }
 
     @Override
@@ -599,6 +599,14 @@ public class JavaASM implements AstVisitor {
 
     private void addCallback(Consumer<MethodVisitor> callback) {
         methodCallbacks.add(callback);
+    }
+
+    private void createLocalVarIndex(VarName varName) {
+        getLocalVarIndex(varName);
+    }
+
+    private int getLocalVarIndex(VarName varName) {
+        return getLocalVarIndex(varName.name());
     }
 
     private int getLocalVarIndex(String name) {
