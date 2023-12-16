@@ -591,7 +591,7 @@ public class JavaASM implements AstVisitor {
         }
         currentMethodVisitor.visitMethodInsn(INVOKEVIRTUAL,
             className,
-            "fn" + expression.fn().name(),
+            FunctionDef.toRuntimeFn(expression.fn().name()),
             toDescriptorString(expression.fn())
         );
     }
@@ -601,7 +601,7 @@ public class JavaASM implements AstVisitor {
             "(%s)%s",
             fn.argTypes().stream()
                 .map(this::toDescriptorString)
-                .collect(Collectors.joining(",")),
+                .collect(Collectors.joining()),
             toDescriptorString(fn.returnType())
         );
     }

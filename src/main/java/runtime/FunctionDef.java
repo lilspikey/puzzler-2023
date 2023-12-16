@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 public record FunctionDef(String name, DataType returnType, List<DataType> argTypes) {
     private static final Pattern NAME_PATTERN = Pattern.compile("^fn(.*)");
+    private static final String DOLLAR_SUFFIX = "_DOLLAR";
 
     public static Set<FunctionDef> getFunctionDefs() {
         var funtionDefs = new HashSet<FunctionDef>();
@@ -24,8 +25,16 @@ public record FunctionDef(String name, DataType returnType, List<DataType> argTy
         return funtionDefs;
     }
 
+    public static String toRuntimeFn(String name) {
+        if (name.endsWith("$")) {
+            return "fn" + name.substring(0, name.length() - 1) + DOLLAR_SUFFIX;
+        }
+        return "fn" + name;
+    }
+
     private static FunctionDef toFunctionDef(Matcher nameMatch, Method method) {
         var name = nameMatch.group(1);
+        name = name.replaceAll(DOLLAR_SUFFIX, "\\$");
         var returnType = toDataType(method.getReturnType());
         var argTypes = Arrays.stream(method.getParameterTypes())
             .map(FunctionDef::toDataType)

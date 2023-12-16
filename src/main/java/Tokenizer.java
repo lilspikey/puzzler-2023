@@ -70,14 +70,15 @@ public class Tokenizer {
                 if (isKeyword(text)) {
                     return new Token(text, Token.Type.KEYWORD);
                 }
-                if (isFunction(text)) {
-                    return new Token(text, Token.Type.FUNCTION);
-                }
                 var suffix = reader.read();
                 if (NAME_SUFFIXES.indexOf(suffix) != -1) {
                     text += (char) suffix;
                 } else {
                     unreadIfNotEOF(suffix);
+                }
+
+                if (isFunction(text)) {
+                    return new Token(text, Token.Type.FUNCTION);
                 }
 
                 return new Token(text, Token.Type.NAME);

@@ -48,6 +48,15 @@ public class BasRuntime implements Runnable {
         return builder.toString();
     }
 
+    float fnASC(String s) {
+        var c = s.charAt(0);
+        return c;
+    }
+
+    String fnLEFT_DOLLAR(String s, float len) {
+        return s.substring(0, (int) len);
+    }
+
     float readFLOAT() {
         var data = this.data[nextDataPtr++];
         return (Float) data;
