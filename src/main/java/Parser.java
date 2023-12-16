@@ -256,6 +256,11 @@ public class Parser {
 
     private ReadStatement nextReadStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.READ);
+        var names = nextVarNames(tokenizer);
+        return new ReadStatement(names);
+    }
+
+    private ArrayList<VarName> nextVarNames(Tokenizer tokenizer) throws IOException {
         var names = new ArrayList<VarName>();
         var done = false;
         var first = true;
@@ -273,7 +278,7 @@ public class Parser {
                 }
             }
         }
-        return new ReadStatement(names);
+        return names;
     }
 
     private EndStatement nextEndStatement(Tokenizer tokenizer) throws IOException {
@@ -392,8 +397,13 @@ public class Parser {
 
     private InputStatement nextInputStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.INPUT);
-        var name = nextVarName(tokenizer);
-        return new InputStatement(name);
+        String prompt = null;
+        if (tokenizer.peek().type() == Token.Type.STRING) {
+            prompt = tokenizer.next().text();
+            nextExpectedSymbol(tokenizer, ";");
+        }
+        var names = nextVarNames(tokenizer);
+        return new InputStatement(prompt, names);
     }
 
     private LetStatement nextLetStatement(Tokenizer tokenizer) throws IOException {

@@ -117,7 +117,17 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(InputStatement statement) {
         System.out.print("INPUT ");
-        visit(statement.name());
+        if (statement.prompt() != null) {
+            System.out.printf("\"%s\";", statement.prompt());
+        }
+        var first = true;
+        for (var name: statement.names()) {
+            if (!first) {
+                System.out.print(",");
+            }
+            visit(name);
+            first = false;
+        }
     }
 
     @Override

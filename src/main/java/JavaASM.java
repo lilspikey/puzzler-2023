@@ -387,19 +387,28 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(InputStatement statement) {
-        var varName = statement.name();
-        createLocalVarIndex(varName);
-        addCallback(methodVisitor -> {
-            varStore(methodVisitor, varName, () -> {
-                var dataType = varName.dataType();
-                var returnType = toDescriptorString(dataType);
-                methodVisitor.visitVarInsn(ALOAD, 0);
-                methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
-                        className,
-                        "input" + dataType,
-                        "()" + returnType);
+        for (var varName: statement.names()) {
+            createLocalVarIndex(varName);
+            addCallback(methodVisitor -> {
+                if (statement.prompt() != null) {
+                    methodVisitor.visitVarInsn(ALOAD, 0);
+                    methodVisitor.visitLdcInsn(statement.prompt());
+                    methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                            className,
+                            "print",
+                            "(Ljava/lang/String;)V");
+                }
+                varStore(methodVisitor, varName, () -> {
+                    var dataType = varName.dataType();
+                    var returnType = toDescriptorString(dataType);
+                    methodVisitor.visitVarInsn(ALOAD, 0);
+                    methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                            className,
+                            "input" + dataType,
+                            "()" + returnType);
+                });
             });
-        });
+        }
     }
 
     @Override
