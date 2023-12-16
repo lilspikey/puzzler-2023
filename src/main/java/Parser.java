@@ -33,6 +33,7 @@ import ast.RemarkStatement;
 import ast.RestoreStatement;
 import ast.ReturnStatement;
 import ast.Statement;
+import ast.StopStatement;
 import ast.StringConstant;
 import ast.VarName;
 import ast.Variable;
@@ -137,6 +138,7 @@ public class Parser {
                 case DATA -> nextDataStatement(tokenizer);
                 case READ -> nextReadStatement(tokenizer);
                 case END -> nextEndStatement(tokenizer);
+                case STOP -> nextStopStatement(tokenizer);
                 case RESTORE -> nextRestoreStatement(tokenizer);
                 case LET -> nextLetStatement(tokenizer);
                 default -> throw parseError("Unexpected token:" + first);
@@ -288,6 +290,11 @@ public class Parser {
     private EndStatement nextEndStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.END);
         return new EndStatement();
+    }
+
+    private StopStatement nextStopStatement(Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.STOP);
+        return new StopStatement();
     }
 
     private RestoreStatement nextRestoreStatement(Tokenizer tokenizer) throws IOException {

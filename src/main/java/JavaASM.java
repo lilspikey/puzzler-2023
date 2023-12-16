@@ -33,6 +33,7 @@ import ast.Program;
 import ast.ReadStatement;
 import ast.RestoreStatement;
 import ast.ReturnStatement;
+import ast.StopStatement;
 import ast.StringConstant;
 import ast.VarName;
 import ast.Variable;
@@ -368,6 +369,13 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(EndStatement statement) {
+        addCallback(methodVisitor -> {
+            methodVisitor.visitInsn(RETURN);
+        });
+    }
+
+    @Override
+    public void visit(StopStatement statement) {
         addCallback(methodVisitor -> {
             methodVisitor.visitInsn(RETURN);
         });

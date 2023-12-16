@@ -31,6 +31,7 @@ import ast.ReadStatement;
 import ast.RemarkStatement;
 import ast.RestoreStatement;
 import ast.ReturnStatement;
+import ast.StopStatement;
 import ast.StringConstant;
 import ast.VarName;
 import ast.Variable;
@@ -197,6 +198,11 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(EndStatement statement) {
         System.out.print("END");
+    }
+
+    @Override
+    public void visit(StopStatement statement) {
+        System.out.print("STOP");
     }
 
     @Override
