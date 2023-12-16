@@ -53,8 +53,17 @@ public class BasRuntime implements Runnable {
         return c;
     }
 
+    float fnLEN(String s) {
+        return s.length();
+    }
+
     String fnLEFT_DOLLAR(String s, float len) {
-        return s.substring(0, (int) len);
+        return s.substring(0, Math.min((int) len, s.length()));
+    }
+
+    // TODO support overloading for the 2 arg version of MID$
+    String fnMID_DOLLAR(String s, float i, float len) {
+        return s.substring((int)(i - 1.0), Math.min((int)(i + len), s.length()));
     }
 
     float readFLOAT() {
