@@ -34,8 +34,6 @@ import ast.StringConstant;
 import ast.VarName;
 import ast.Variable;
 
-import java.util.stream.Collectors;
-
 /*
  Just a simple visitor to walk the AST and print it out
  */
@@ -55,6 +53,22 @@ public class ProgramListing implements AstVisitor {
             }
         }
         System.out.println();
+    }
+
+    public void visit(VarName varName) {
+        System.out.print(varName.name().replace("()", ""));
+        if (varName.isArray()) {
+            System.out.print("(");
+            var first = true;
+            for (var index: varName.indexes()) {
+                if (!first) {
+                    System.out.print(",");
+                }
+                index.visit(this);
+                first = false;
+            }
+            System.out.print(")");
+        }
     }
 
     @Override
@@ -95,13 +109,15 @@ public class ProgramListing implements AstVisitor {
 
     @Override
     public void visit(LetStatement statement) {
-        System.out.print(statement.name() + " = ");
+        visit(statement.name());
+        System.out.print("=");
         statement.expression().visit(this);
     }
 
     @Override
     public void visit(InputStatement statement) {
-        System.out.print("INPUT " + statement.name());
+        System.out.print("INPUT ");
+        visit(statement.name());
     }
 
     @Override
@@ -128,7 +144,15 @@ public class ProgramListing implements AstVisitor {
 
     @Override
     public void visit(ReadStatement statement) {
-        System.out.print("READ " + statement.names().stream().map(VarName::toString).collect(Collectors.joining(",")));
+        System.out.print("READ ");
+        var first = true;
+        for (var name: statement.names()) {
+            if (!first) {
+                System.out.print(",");
+            }
+            visit(name);
+            first = false;
+        }
     }
 
     @Override
@@ -176,7 +200,7 @@ public class ProgramListing implements AstVisitor {
 
     @Override
     public void visit(Variable expression) {
-        System.out.print(expression.name().toString());
+        visit(expression.name());
     }
 
     @Override

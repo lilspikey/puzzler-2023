@@ -3,7 +3,6 @@ import ast.FloatAddition;
 import ast.FloatConstant;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
-import ast.Variable;
 import ast.GotoStatement;
 import ast.IfStatement;
 import ast.LetStatement;
@@ -13,6 +12,7 @@ import ast.PrintStatement;
 import ast.Program;
 import ast.StringConstant;
 import ast.VarName;
+import ast.Variable;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -253,7 +253,30 @@ class ParserTest {
             )),
             program
         );
+    }
 
+    @Test
+    public void givenArrayVariables_whenParsing_thenProgramReturned() throws IOException {
+        Parser parser = new Parser();
+        Program program = parser.parse(new StringReader(
+            "100 LET A(1) = 0\n"
+            + "200 PRINT A(1)"
+        ));
+        assertEquals(
+            new Program(List.of(
+                new Line("100",
+                    List.of(
+                        new LetStatement(new VarName("A()", DataType.FLOAT, List.of(new FloatConstant(1.0f))), new FloatConstant(0.0f))
+                    )
+                ),
+                new Line("200",
+                    List.of(
+                        new PrintStatement(List.of(new Variable(new VarName("A()", DataType.FLOAT, List.of(new FloatConstant(1.0f))))))
+                    )
+                )
+            )),
+            program
+        );
     }
 
 }

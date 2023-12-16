@@ -65,6 +65,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.objectweb.asm.Opcodes.AALOAD;
 import static org.objectweb.asm.Opcodes.AASTORE;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM4;
@@ -73,6 +74,8 @@ import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.DUP2;
 import static org.objectweb.asm.Opcodes.F2I;
 import static org.objectweb.asm.Opcodes.FADD;
+import static org.objectweb.asm.Opcodes.FALOAD;
+import static org.objectweb.asm.Opcodes.FASTORE;
 import static org.objectweb.asm.Opcodes.FCMPG;
 import static org.objectweb.asm.Opcodes.FCONST_0;
 import static org.objectweb.asm.Opcodes.FDIV;
@@ -90,6 +93,7 @@ import static org.objectweb.asm.Opcodes.IFLT;
 import static org.objectweb.asm.Opcodes.IFNE;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.ISUB;
 import static org.objectweb.asm.Opcodes.NOP;
 import static org.objectweb.asm.Opcodes.POP2;
 import static org.objectweb.asm.Opcodes.PUTFIELD;
@@ -105,6 +109,7 @@ public class JavaASM implements AstVisitor {
     private Label endLabel;
     private final Set<Label> targetLabels = new HashSet<>();
     private final List<Label> returnLabels = new ArrayList<>();
+    private final Set<VarName> declaredVariables = new HashSet<>();
     private final Deque<OpenForStatement> openForStatements = new ArrayDeque<>();
     private final List<Consumer<MethodVisitor>> methodCallbacks = new ArrayList<>();
     private final NavigableSet<Line> lines = new TreeSet<>(Comparator.comparing(Line::numericLabel));
@@ -129,6 +134,7 @@ public class JavaASM implements AstVisitor {
                     currentMethodVisitor = methodVisitor;
                     methodVisitor.visitCode();
                     storeDataConstants(methodVisitor);
+                    initArrays(methodVisitor);
                     for (var callback: methodCallbacks) {
                         callback.accept(methodVisitor);
                     }
@@ -288,14 +294,15 @@ public class JavaASM implements AstVisitor {
         for (var varName: statement.names()) {
             createLocalVarIndex(varName);
             addCallback(methodVisitor -> {
-                var dataType = varName.dataType();
-                var returnType = toDescriptorString(dataType);
-                methodVisitor.visitVarInsn(ALOAD, 0);
-                methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
-                        className,
-                        "read" + dataType,
-                        "()" + returnType);
-                visitVarStore(methodVisitor, varName);
+                varStore(methodVisitor, varName, () -> {
+                    var dataType = varName.dataType();
+                    var returnType = toDescriptorString(dataType);
+                    methodVisitor.visitVarInsn(ALOAD, 0);
+                    methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                            className,
+                            "read" + dataType,
+                            "()" + returnType);
+                });
             });
         }
     }
@@ -383,14 +390,15 @@ public class JavaASM implements AstVisitor {
         var varName = statement.name();
         createLocalVarIndex(varName);
         addCallback(methodVisitor -> {
-            var dataType = varName.dataType();
-            var returnType = toDescriptorString(dataType);
-            methodVisitor.visitVarInsn(ALOAD, 0);
-            methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
-                    className,
-                    "input" + dataType,
-                    "()" + returnType);
-            visitVarStore(methodVisitor, varName);
+            varStore(methodVisitor, varName, () -> {
+                var dataType = varName.dataType();
+                var returnType = toDescriptorString(dataType);
+                methodVisitor.visitVarInsn(ALOAD, 0);
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                        className,
+                        "input" + dataType,
+                        "()" + returnType);
+            });
         });
     }
 
@@ -399,19 +407,38 @@ public class JavaASM implements AstVisitor {
         var varName = statement.name();
         createLocalVarIndex(varName);
         addCallback(methodVisitor -> {
-            statement.expression().visit(this);
-            visitVarStore(methodVisitor, varName);
+            varStore(methodVisitor, varName, () -> statement.expression().visit(this));
         });
     }
 
-    private void visitVarStore(MethodVisitor methodVisitor, VarName varName) {
-        var index = getLocalVarIndex(varName.name());
+    private void varStore(MethodVisitor methodVisitor, VarName varName, Runnable value) {
+        var index = getLocalVarIndex(varName);
         var dataType = varName.dataType();
-        var store = switch (dataType) {
-            case FLOAT -> FSTORE;
-            case STRING -> ASTORE;
-        };
-        methodVisitor.visitVarInsn(store, index);
+        if (varName.isArray()) {
+            methodVisitor.visitVarInsn(ALOAD, index);
+            visitArrayIndex(methodVisitor, varName.indexes().get(0));
+            value.run();
+            var store = switch (dataType) {
+                case FLOAT -> FASTORE;
+                case STRING -> AASTORE;
+            };
+            methodVisitor.visitInsn(store);
+        } else {
+            value.run();
+            var store = switch (dataType) {
+                case FLOAT -> FSTORE;
+                case STRING -> ASTORE;
+            };
+            methodVisitor.visitVarInsn(store, index);
+        }
+    }
+
+    private void visitArrayIndex(MethodVisitor methodVisitor, Expression expression) {
+        // need to handle the fact default is float and arrays start from one in Basic
+        expression.visit(this);
+        methodVisitor.visitInsn(F2I);
+        methodVisitor.visitLdcInsn(1);
+        methodVisitor.visitInsn(ISUB);
     }
 
     @Override
@@ -428,9 +455,18 @@ public class JavaASM implements AstVisitor {
     public void visit(Variable expression) {
         var varName = expression.name();
         var index = getLocalVarIndex(varName.name());
-        switch (varName.dataType()) {
-            case FLOAT -> currentMethodVisitor.visitVarInsn(FLOAD, index);
-            case STRING -> currentMethodVisitor.visitVarInsn(ALOAD, index);
+        if (varName.isArray()) {
+            currentMethodVisitor.visitVarInsn(ALOAD, index);
+            visitArrayIndex(currentMethodVisitor, varName.indexes().get(0));
+            switch (varName.dataType()) {
+                case FLOAT -> currentMethodVisitor.visitInsn(FALOAD);
+                case STRING -> currentMethodVisitor.visitInsn(AALOAD);
+            }
+        } else {
+            switch (varName.dataType()) {
+                case FLOAT -> currentMethodVisitor.visitVarInsn(FLOAD, index);
+                case STRING -> currentMethodVisitor.visitVarInsn(ALOAD, index);
+            }
         }
     }
     @Override
@@ -597,6 +633,22 @@ public class JavaASM implements AstVisitor {
         methodVisitor.visitFieldInsn(PUTFIELD, className, "data", "[" + Object.class.descriptorString());
     }
 
+    private void initArrays(MethodVisitor methodVisitor) {
+        var arrayDims = declaredVariables.stream()
+            .filter(VarName::isArray)
+            .map(VarName::getArrayDimensions)
+            .collect(Collectors.toSet());
+        for (var arrayDim: arrayDims) {
+            if (arrayDim.dimensions() > 1) {
+                throw new IllegalStateException("Only one dimensional arrays supported");
+            }
+            var index = getLocalVarIndex(arrayDim.name());
+            methodVisitor.visitLdcInsn(10);
+            methodVisitor.visitMultiANewArrayInsn("[" + toDescriptorString(arrayDim.dataType()), arrayDim.dimensions());
+            methodVisitor.visitVarInsn(ASTORE, index);
+        }
+    }
+
     private void addCallback(Consumer<MethodVisitor> callback) {
         methodCallbacks.add(callback);
     }
@@ -606,6 +658,7 @@ public class JavaASM implements AstVisitor {
     }
 
     private int getLocalVarIndex(VarName varName) {
+        declaredVariables.add(varName);
         return getLocalVarIndex(varName.name());
     }
 

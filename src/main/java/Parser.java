@@ -412,6 +412,28 @@ public class Parser {
     private VarName nextVarName(Tokenizer tokenizer) throws IOException {
         var name = nextExpectedName(tokenizer).text();
         var dataType = DataType.fromVarName(name);
+        var peek = tokenizer.peek();
+        if (peek.type() == Token.Type.SYMBOL && peek.text().equals("(")) {
+            nextExpectedSymbol(tokenizer, "(");
+            var indexes = new ArrayList<Expression>();
+            var done = false;
+            var first = true;
+            while (!done) {
+                var next = tokenizer.peek();
+                if (next.type() == Token.Type.SYMBOL && next.text().equals(")")) {
+                    done = true;
+                } else {
+                    if (!first) {
+                        nextExpectedSymbol(tokenizer, ",");
+                    }
+                    indexes.add(nextExpression(tokenizer));
+                }
+            }
+            nextExpectedSymbol(tokenizer, ")");
+            // append brackets to name so we don't clash with scalar types when assigning
+            // local vars
+            return new VarName(name + "()", dataType, indexes);
+        }
         return new VarName(name, dataType);
     }
 
