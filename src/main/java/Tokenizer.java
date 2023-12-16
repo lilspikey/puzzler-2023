@@ -64,7 +64,7 @@ public class Tokenizer {
             if (isUppercaseAlphabetic(c)) {
                 reader.unread(c);
                 String text = consumeAllMatching(
-                    this::isUppercaseAlphabetic,
+                    this::isUppercaseAlphaNumeric,
                     builder -> isKeyword(builder.toString())
                 );
                 if (isKeyword(text)) {
@@ -158,6 +158,10 @@ public class Tokenizer {
 
     private boolean isUppercaseAlphabetic(int c) {
         return 'A' <= c && c <= 'Z';
+    }
+
+    private boolean isUppercaseAlphaNumeric(int c) {
+        return 'A' <= c && c <= 'Z' || '0' <= c && c <= '9';
     }
 
     private boolean isNumeric(int c) {
