@@ -561,6 +561,9 @@ public class JavaASM implements AstVisitor {
     }
 
     private void storeDataConstants(MethodVisitor methodVisitor) {
+        if (dataConstants.isEmpty()) {
+            return;
+        }
         methodVisitor.visitVarInsn(ALOAD, 0);
         methodVisitor.visitLdcInsn(dataConstants.size());
         methodVisitor.visitMultiANewArrayInsn("["+Object.class.descriptorString(), 1);
