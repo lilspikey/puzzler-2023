@@ -27,6 +27,8 @@ public interface AstVisitor {
 
     void visit(ReadStatement statement);
 
+    void visit(RestoreStatement statement);
+
     void visit(EndStatement statement);
 
     void visit(ForStatement statement);

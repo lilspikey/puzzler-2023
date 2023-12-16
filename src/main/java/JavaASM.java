@@ -31,6 +31,7 @@ import ast.PrintStatement;
 import ast.Printable;
 import ast.Program;
 import ast.ReadStatement;
+import ast.RestoreStatement;
 import ast.ReturnStatement;
 import ast.StringAssignment;
 import ast.StringConstant;
@@ -55,8 +56,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -96,6 +99,7 @@ import static org.objectweb.asm.Opcodes.RETURN;
 public class JavaASM implements AstVisitor {
     private String className;
     private final List<Object> dataConstants = new ArrayList<>();
+    private final NavigableMap<Integer, Integer> dataPositions = new TreeMap<>();
     private final AtomicInteger nextLocalVarIndex = new AtomicInteger(1);
     private final Map<String, Integer> localVarIndexes = new HashMap<>();
     private final Map<String, Label> linesToLabels = new HashMap<>();
@@ -276,6 +280,7 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(DataStatement statement) {
+        dataPositions.put(currentLine.numericLabel(), dataConstants.size());
         dataConstants.addAll(statement.constants());
     }
 
@@ -298,6 +303,23 @@ public class JavaASM implements AstVisitor {
                 methodVisitor.visitVarInsn(store, index);
             });
         }
+    }
+
+    @Override
+    public void visit(RestoreStatement statement) {
+        addCallback(methodVisitor -> {
+            int nextDataPtr = 0;
+            if (statement.label() != null) {
+                var nextPositions = dataPositions.tailMap(Integer.parseInt(statement.label()));
+                if (nextPositions.isEmpty()) {
+                    throw new IllegalStateException("Could not find data after: " + statement.label());
+                }
+                nextDataPtr = nextPositions.get(nextPositions.firstKey());
+            }
+            methodVisitor.visitVarInsn(ALOAD, 0);
+            methodVisitor.visitLdcInsn(nextDataPtr);
+            methodVisitor.visitFieldInsn(PUTFIELD, className, "nextDataPtr", "I");
+        });
     }
 
     @Override

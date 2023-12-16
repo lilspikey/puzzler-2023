@@ -13,5 +13,6 @@ public enum Keyword {
     NEXT,
     END,
     DATA,
-    READ
+    READ,
+    RESTORE
 }

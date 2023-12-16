@@ -29,6 +29,7 @@ import ast.PrintSeperator;
 import ast.PrintStatement;
 import ast.ReadStatement;
 import ast.RemarkStatement;
+import ast.RestoreStatement;
 import ast.ReturnStatement;
 import ast.StringAssignment;
 import ast.StringConstant;
@@ -127,6 +128,14 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(ReadStatement statement) {
         System.out.print("READ " + String.join(",", statement.names()));
+    }
+
+    @Override
+    public void visit(RestoreStatement statement) {
+        System.out.print("RESTORE");
+        if (statement.label() != null) {
+            System.out.print(" " + statement.label());
+        };
     }
 
     @Override

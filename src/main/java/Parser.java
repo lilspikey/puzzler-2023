@@ -30,6 +30,7 @@ import ast.Printable;
 import ast.Program;
 import ast.ReadStatement;
 import ast.RemarkStatement;
+import ast.RestoreStatement;
 import ast.ReturnStatement;
 import ast.Statement;
 import ast.StringAssignment;
@@ -133,6 +134,7 @@ public class Parser {
                 case DATA -> nextDataStatement(tokenizer);
                 case READ -> nextReadStatement(tokenizer);
                 case END -> nextEndStatement(tokenizer);
+                case RESTORE -> nextRestoreStatement(tokenizer);
                 default -> throw parseError("Unexpected token:" + first);
             };
         } else if (first.type() == Token.Type.NAME) {
@@ -280,6 +282,15 @@ public class Parser {
     private EndStatement nextEndStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.END);
         return new EndStatement();
+    }
+
+    private RestoreStatement nextRestoreStatement(Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.RESTORE);
+        String label = null;
+        if (tokenizer.peek().type() == Token.Type.NUMBER) {
+            label = nextExpectedNumber(tokenizer).text();
+        }
+        return new RestoreStatement(label);
     }
 
     private Expression nextExpression(Tokenizer tokenizer) throws IOException {
