@@ -284,10 +284,10 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(ReadStatement statement) {
-        for (var name: statement.names()) {
-            var index = getLocalVarIndex(name);
+        for (var varName: statement.names()) {
+            var index = getLocalVarIndex(varName.name());
             addCallback(methodVisitor -> {
-                var dataType = DataType.fromVarName(name);
+                var dataType = varName.dataType();
                 var returnType = toDescriptorString(dataType);
                 methodVisitor.visitVarInsn(ALOAD, 0);
                 methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
@@ -383,9 +383,10 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(InputStatement statement) {
-        var index = getLocalVarIndex(statement.name());
+        var varName = statement.name();
+        var index = getLocalVarIndex(varName.name());
         addCallback(methodVisitor -> {
-            var dataType = DataType.fromVarName(statement.name());
+            var dataType = varName.dataType();
             var returnType = toDescriptorString(dataType);
             methodVisitor.visitVarInsn(ALOAD, 0);
             methodVisitor.visitMethodInsn(INVOKEVIRTUAL,

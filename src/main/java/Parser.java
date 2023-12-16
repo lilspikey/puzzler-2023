@@ -256,7 +256,7 @@ public class Parser {
 
     private ReadStatement nextReadStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.READ);
-        var names = new ArrayList<String>();
+        var names = new ArrayList<VarName>();
         var done = false;
         var first = true;
         while (!done) {
@@ -268,7 +268,7 @@ public class Parser {
                         nextExpectedSymbol(tokenizer, ",");
                     }
                     first = false;
-                    var name = nextExpectedName(tokenizer).text();
+                    var name = nextVarName(tokenizer);
                     names.add(name);
                 }
             }
@@ -392,8 +392,8 @@ public class Parser {
 
     private InputStatement nextInputStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.INPUT);
-        var name = nextExpectedName(tokenizer);
-        return new InputStatement(name.text());
+        var name = nextVarName(tokenizer);
+        return new InputStatement(name);
     }
 
     private LetStatement nextLetStatement(Tokenizer tokenizer) throws IOException {

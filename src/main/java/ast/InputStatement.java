@@ -1,6 +1,6 @@
 package ast;
 
-public record InputStatement(String name) implements Statement {
+public record InputStatement(VarName name) implements Statement {
     @Override
     public void visit(AstVisitor visitor) {
         visitor.visit(this);

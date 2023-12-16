@@ -31,7 +31,10 @@ import ast.RemarkStatement;
 import ast.RestoreStatement;
 import ast.ReturnStatement;
 import ast.StringConstant;
+import ast.VarName;
 import ast.Variable;
+
+import java.util.stream.Collectors;
 
 /*
  Just a simple visitor to walk the AST and print it out
@@ -125,7 +128,7 @@ public class ProgramListing implements AstVisitor {
 
     @Override
     public void visit(ReadStatement statement) {
-        System.out.print("READ " + String.join(",", statement.names()));
+        System.out.print("READ " + statement.names().stream().map(VarName::toString).collect(Collectors.joining(",")));
     }
 
     @Override
@@ -173,7 +176,7 @@ public class ProgramListing implements AstVisitor {
 
     @Override
     public void visit(Variable expression) {
-        System.out.print(expression.name());
+        System.out.print(expression.name().toString());
     }
 
     @Override
