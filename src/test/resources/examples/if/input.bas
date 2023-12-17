@@ -6,3 +6,8 @@
 50 IF B = A THEN 70
 60 PRINT "B <> A"
 70 PRINT "B = A"
+80 A$ = "hello"
+90 B$ = "hi"
+100 IF A$=B$ THEN PRINT "A$ = B$"
+110 B$ = A$
+120 IF A$=B$ THEN PRINT "A$ = B$"
