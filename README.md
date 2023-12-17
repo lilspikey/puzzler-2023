@@ -133,3 +133,9 @@ might not be so good.
   statements this should be pretty quick/small, but as the number of GOSUBs increase we will be generating
   more and more code for the RETURN.
 * Pairing of FOR + NEXT is done statically at compile time
+* I suspect the less "structured" the BASIC code the more likely there will be problems
+* Currently not everything is supported, but a few of the programs from http://www.vintage-basic.net/games.html
+  should run:
+  * http://www.vintage-basic.net/bcg/aceyducey.bas
+  * http://www.vintage-basic.net/bcg/banner.bas
+  * http://www.vintage-basic.net/bcg/hi-lo.bas
