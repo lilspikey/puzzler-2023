@@ -63,7 +63,8 @@ public class BasRuntime implements Runnable {
 
     // TODO support overloading for the 2 arg version of MID$
     String fnMID_DOLLAR(String s, float i, float len) {
-        return s.substring((int)(i - 1.0), Math.min((int)(i + len), s.length()));
+        var index = (int)(i - 1.0f);
+        return s.substring(index, Math.min(index + (int) len, s.length()));
     }
 
     float readFLOAT() {
