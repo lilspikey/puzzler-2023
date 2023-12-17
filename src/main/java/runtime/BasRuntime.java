@@ -3,6 +3,7 @@ package runtime;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.text.MessageFormat;
+import java.util.InputMismatchException;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -14,7 +15,7 @@ import java.util.Scanner;
 public class BasRuntime implements Runnable {
     private static final int PRINT_ZONE_WIDTH = 14;
     // these are here so we can swap them out in tests
-    private InputStream in = System.in;
+    private Scanner in = new Scanner(System.in);
     private PrintStream out = System.out;
     private int currentTab = 0;
     private Random random = new Random();
@@ -103,15 +104,17 @@ public class BasRuntime implements Runnable {
     }
 
     float inputFLOAT() {
-        var in = new Scanner(this.in);
-        while (!in.hasNextFloat()) {
-            in.next();
+        while (true) {
+            try {
+                return in.nextFloat();
+            } catch (InputMismatchException e) {
+                print("Please enter a valid number");
+                println();
+            }
         }
-        return in.nextFloat();
     }
 
     String inputSTRING() {
-        var in = new Scanner(this.in);
         return in.nextLine();
     }
 
@@ -124,11 +127,11 @@ public class BasRuntime implements Runnable {
 
     }
 
-    public InputStream getIn() {
+    public Scanner getIn() {
         return in;
     }
 
-    public void setIn(InputStream in) {
+    public void setIn(Scanner in) {
         this.in = in;
     }
 

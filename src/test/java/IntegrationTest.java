@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -19,7 +20,7 @@ class IntegrationTest {
     @ParameterizedTest
     @ValueSource(strings = {
             "hello", "loop", "expressions", "if", "comparisons", "functions", "end", "strings", "data",
-            "gosub", "datatypes"
+            "gosub", "datatypes", "input"
     })
     void givenSource_whenCompilingAndRunning_thenCorrectOutputGenerated(String exampleDir) throws Exception {
         var javaAsm = new JavaASM();
@@ -42,8 +43,15 @@ class IntegrationTest {
         Runnable runnable = clazz.getDeclaredConstructor().newInstance();
         PropertyDescriptor outProperty = new PropertyDescriptor("out", clazz);
         ByteArrayOutputStream capturedOutput = new ByteArrayOutputStream();
-        try (PrintStream printOut = new PrintStream(capturedOutput)) {
+        try (
+            var printOut = new PrintStream(capturedOutput);
+            var stdinBytes = getClass().getResourceAsStream("examples/" + exampleDir + "/stdin.txt")
+        ) {
             outProperty.getWriteMethod().invoke(runnable, printOut);
+            if (stdinBytes != null) {
+                PropertyDescriptor inProperty = new PropertyDescriptor("in", clazz);
+                inProperty.getWriteMethod().invoke(runnable, new Scanner(stdinBytes));
+            }
             runnable.run();
         }
 
