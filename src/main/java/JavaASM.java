@@ -74,7 +74,6 @@ import static org.objectweb.asm.Opcodes.ASM4;
 import static org.objectweb.asm.Opcodes.ASTORE;
 import static org.objectweb.asm.Opcodes.D2F;
 import static org.objectweb.asm.Opcodes.DUP;
-import static org.objectweb.asm.Opcodes.DUP2;
 import static org.objectweb.asm.Opcodes.F2D;
 import static org.objectweb.asm.Opcodes.F2I;
 import static org.objectweb.asm.Opcodes.FADD;
@@ -114,6 +113,7 @@ public class JavaASM implements AstVisitor {
     private final Set<Label> targetLabels = new HashSet<>();
     private final List<Label> returnLabels = new ArrayList<>();
     private final Set<VarName> declaredVariables = new HashSet<>();
+    private final AtomicInteger nextForNum = new AtomicInteger(1);
     private final Deque<OpenForStatement> openForStatements = new ArrayDeque<>();
     private final List<Consumer<MethodVisitor>> methodCallbacks = new ArrayList<>();
     private final NavigableSet<Line> lines = new TreeSet<>(Comparator.comparing(Line::numericLabel));
@@ -331,18 +331,22 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(ForStatement statement) {
         var continueLabel = newTargettedLabel();
-        openForStatements.add(new OpenForStatement(continueLabel, statement));
-        var index = getLocalVarIndex(statement.varname());
+        var forNum = nextForNum.getAndIncrement();
+        var varIndex = getLocalVarIndex(statement.varname());
+        var endIndex = getLocalVarIndex("#FOR#END#" + forNum);
+        var incIndex = getLocalVarIndex("#FOR#INC#" + forNum);
+        openForStatements.add(new OpenForStatement(continueLabel, statement, varIndex, endIndex, incIndex));
         addCallback(methodVisitor -> {
             statement.start().visit(this);
-            methodVisitor.visitVarInsn(FSTORE, index);
-            // end + increment go on the stack, to be used by NEXT statement
+            methodVisitor.visitVarInsn(FSTORE, varIndex);
             statement.end().visit(this);
+            methodVisitor.visitVarInsn(FSTORE, endIndex);
             if (statement.increment() != null) {
                 statement.increment().visit(this);
             } else {
                 methodVisitor.visitLdcInsn(1.0f);
             }
+            methodVisitor.visitVarInsn(FSTORE, incIndex);
             visitLabelIfTargeted(methodVisitor, continueLabel);
             methodVisitor.visitInsn(NOP);
         });
@@ -352,20 +356,15 @@ public class JavaASM implements AstVisitor {
     public void visit(NextStatement statement) {
         var openFor = findMatchingForStatement(statement);
         addCallback(methodVisitor -> {
-            var forStatement = openFor.forStatement();
-            // copy end + increment from stack
-            methodVisitor.visitInsn(DUP2);
-            // add increment
-            var varIndex = getLocalVarIndex(forStatement.varname());
-            methodVisitor.visitVarInsn(FLOAD, varIndex);
+            methodVisitor.visitVarInsn(FLOAD, openFor.varIndex());
+            methodVisitor.visitVarInsn(FLOAD, openFor.incIndex());
             methodVisitor.visitInsn(FADD);
-            methodVisitor.visitVarInsn(FSTORE, varIndex);
+            methodVisitor.visitVarInsn(FSTORE, openFor.varIndex());
             // then compare end with the loop variable
-            methodVisitor.visitVarInsn(FLOAD, varIndex);
+            methodVisitor.visitVarInsn(FLOAD, openFor.endIndex());
+            methodVisitor.visitVarInsn(FLOAD, openFor.varIndex());
             methodVisitor.visitInsn(FCMPG);
             methodVisitor.visitJumpInsn(IFGE, openFor.continueLabel());
-            // loop finished, so remove end + increment from the stack
-            methodVisitor.visitInsn(POP2);
         });
     }
 
@@ -728,7 +727,7 @@ public class JavaASM implements AstVisitor {
         }
     }
 
-    record OpenForStatement(Label continueLabel, ForStatement forStatement) {
+    record OpenForStatement(Label continueLabel, ForStatement forStatement, int varIndex, int endIndex, int incIndex) {
 
     }
 }
