@@ -84,7 +84,7 @@ public class BasRuntime implements Runnable {
     }
 
     void print(float f) {
-        print(formatFloat(f));
+        print((f >= 0.0? " " : "") + formatFloat(f) + " ");
     }
 
     void nextPrintZone() {

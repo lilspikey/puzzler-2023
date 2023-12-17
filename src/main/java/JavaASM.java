@@ -416,6 +416,12 @@ public class JavaASM implements AstVisitor {
                             className,
                             "print",
                             "(Ljava/lang/String;)V");
+                    methodVisitor.visitVarInsn(ALOAD, 0);
+                    methodVisitor.visitLdcInsn("? ");
+                    methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                            className,
+                            "print",
+                            "(Ljava/lang/String;)V");
                 }
                 varStore(methodVisitor, varName, () -> {
                     var dataType = varName.dataType();

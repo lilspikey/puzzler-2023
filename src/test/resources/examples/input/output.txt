@@ -1,2 +1,2 @@
-NameHello John
-What is your ageYou are 45 years old
+Name? Hello John
+What is your age? You are 45 years old
