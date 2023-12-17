@@ -330,7 +330,8 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(ForStatement statement) {
-        openForStatements.add(new OpenForStatement(currentLine, statement));
+        var continueLabel = newTargettedLabel();
+        openForStatements.add(new OpenForStatement(continueLabel, statement));
         var index = getLocalVarIndex(statement.varname());
         addCallback(methodVisitor -> {
             statement.start().visit(this);
@@ -342,13 +343,14 @@ public class JavaASM implements AstVisitor {
             } else {
                 methodVisitor.visitLdcInsn(1.0f);
             }
+            visitLabelIfTargeted(methodVisitor, continueLabel);
+            methodVisitor.visitInsn(NOP);
         });
     }
 
     @Override
     public void visit(NextStatement statement) {
         var openFor = findMatchingForStatement(statement);
-        var label = targetNextLineLabel(openFor.line);
         addCallback(methodVisitor -> {
             var forStatement = openFor.forStatement();
             // copy end + increment from stack
@@ -361,7 +363,7 @@ public class JavaASM implements AstVisitor {
             // then compare end with the loop variable
             methodVisitor.visitVarInsn(FLOAD, varIndex);
             methodVisitor.visitInsn(FCMPG);
-            methodVisitor.visitJumpInsn(IFGE, label);
+            methodVisitor.visitJumpInsn(IFGE, openFor.continueLabel());
             // loop finished, so remove end + increment from the stack
             methodVisitor.visitInsn(POP2);
         });
@@ -726,7 +728,7 @@ public class JavaASM implements AstVisitor {
         }
     }
 
-    record OpenForStatement(Line line, ForStatement forStatement) {
+    record OpenForStatement(Label continueLabel, ForStatement forStatement) {
 
     }
 }
