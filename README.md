@@ -5,6 +5,9 @@ This year the idea was to do something with the programming language "Basic".
 I chose to write a compiler that would compile Basic programs (e.g. from http://www.vintage-basic.net/games.html)
 to Java byte code.  To do this I am using the [ASM](https://asm.ow2.io/) library.
 
+I am using the [Vintage BASIC User's guide](http://www.vintage-basic.net/downloads/Vintage_BASIC_Users_Guide.html)
+as my reference for correct behaviour of programs.
+
 The parser is a classic hand-rolled recursive descent parser that generates an
 "abstract syntax tree" (AST).  Then a visitor can be used to walk that tree.  Two
 visitors are implemented:
