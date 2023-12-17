@@ -94,6 +94,7 @@ import static org.objectweb.asm.Opcodes.IFGT;
 import static org.objectweb.asm.Opcodes.IFLE;
 import static org.objectweb.asm.Opcodes.IFLT;
 import static org.objectweb.asm.Opcodes.IFNE;
+import static org.objectweb.asm.Opcodes.IF_ICMPNE;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.ISUB;
@@ -356,15 +357,21 @@ public class JavaASM implements AstVisitor {
     public void visit(NextStatement statement) {
         var openFor = findMatchingForStatement(statement);
         addCallback(methodVisitor -> {
+            // add increment to loop
             methodVisitor.visitVarInsn(FLOAD, openFor.varIndex());
             methodVisitor.visitVarInsn(FLOAD, openFor.incIndex());
             methodVisitor.visitInsn(FADD);
             methodVisitor.visitVarInsn(FSTORE, openFor.varIndex());
-            // then compare end with the loop variable
-            methodVisitor.visitVarInsn(FLOAD, openFor.endIndex());
-            methodVisitor.visitVarInsn(FLOAD, openFor.varIndex());
+            // see which direction the loop is going
+            methodVisitor.visitVarInsn(FLOAD, openFor.incIndex());
+            methodVisitor.visitLdcInsn(0.0f);
             methodVisitor.visitInsn(FCMPG);
-            methodVisitor.visitJumpInsn(IFGE, openFor.continueLabel());
+            // then compare end vs var
+            methodVisitor.visitVarInsn(FLOAD, openFor.varIndex());
+            methodVisitor.visitVarInsn(FLOAD, openFor.endIndex());
+            methodVisitor.visitInsn(FCMPG);
+            // then see if the direction of the comparisons are the same or not
+            methodVisitor.visitJumpInsn(IF_ICMPNE, openFor.continueLabel());
         });
     }
 

@@ -28,3 +28,9 @@ Nested loop
 1
 2
 Loop done: 20
+Reverse loop
+4
+3
+2
+1
+0
