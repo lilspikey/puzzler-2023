@@ -440,14 +440,16 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(DimStatement statement) {
-        var name = statement.name();
-        var dim = statement.getArrayDimensions();
-        if (dimensionedArrays.put(dim.name(), statement.getArrayDimensions()) != null) {
-            throw new IllegalStateException("Cannot re-dim array: " + name);
+        for (var array: statement.arrays()) {
+            var name = array.name();
+            var dim = array.getArrayDimensions();
+            if (dimensionedArrays.put(dim.name(), dim) != null) {
+                throw new IllegalStateException("Cannot re-dim array: " + name);
+            }
+            addCallback(methodVisitor -> {
+                visitArrayCreate(methodVisitor, dim, array.sizes());
+            });
         }
-        addCallback(methodVisitor -> {
-            visitArrayCreate(methodVisitor, statement.getArrayDimensions(), statement.sizes());
-        });
     }
 
     @Override

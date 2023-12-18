@@ -135,16 +135,24 @@ public class ProgramListing implements AstVisitor {
 
     @Override
     public void visit(DimStatement statement) {
-        System.out.print("DIM " + statement.name() + "(");
-        var first = true;
-        for (var size: statement.sizes()) {
-            if (!first) {
-                System.out.print(",");
+        System.out.print("DIM ");
+        var firstArray = true;
+        for (var array: statement.arrays()) {
+            if (!firstArray) {
+                System.out.println(",");
             }
-            size.visit(this);
-            first = false;
+            System.out.print(array.name() + "(");
+            var first = true;
+            for (var size : array.sizes()) {
+                if (!first) {
+                    System.out.print(",");
+                }
+                size.visit(this);
+                first = false;
+            }
+            System.out.print(")");
+            firstArray = false;
         }
-        System.out.print(")");
     }
 
     @Override

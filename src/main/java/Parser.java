@@ -1,3 +1,4 @@
+import ast.ArrayInit;
 import ast.DataStatement;
 import ast.DataType;
 import ast.DimStatement;
@@ -453,9 +454,20 @@ public class Parser {
 
     private DimStatement nextDimStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.DIM);
-        var name = nextExpectedName(tokenizer).text();
-        var args = nextFunctionParams(tokenizer);
-        return new DimStatement(name, DataType.fromVarName(name), args);
+        var arrays = new ArrayList<ArrayInit>();
+        var done = false;
+        while (!done) {
+            if (!arrays.isEmpty()) {
+                nextExpectedSymbol(tokenizer, ",");
+            }
+            var name = nextExpectedName(tokenizer).text();
+            var args = nextFunctionParams(tokenizer);
+            arrays.add(new ArrayInit(name, DataType.fromVarName(name), args));
+            switch(tokenizer.peek().type()) {
+                case EOF, EOL -> done = true;
+            }
+        }
+        return new DimStatement(arrays);
     }
 
     private VarName nextVarName(Tokenizer tokenizer) throws IOException {
