@@ -41,6 +41,8 @@ public interface AstVisitor {
 
     void visit(InputStatement statement);
 
+    void visit(DimStatement statement);
+
     void visit(StringConstant expression);
 
     void visit(FloatConstant expression);

@@ -1,5 +1,6 @@
 import ast.DataStatement;
 import ast.DataType;
+import ast.DimStatement;
 import ast.EndStatement;
 import ast.Equals;
 import ast.Expression;
@@ -144,6 +145,7 @@ public class Parser {
                 case STOP -> nextStopStatement(tokenizer);
                 case RESTORE -> nextRestoreStatement(tokenizer);
                 case LET -> nextLetStatement(tokenizer);
+                case DIM -> nextDimStatement(tokenizer);
                 default -> throw parseError("Unexpected token:" + first);
             };
         } else if (first.type() == Token.Type.NAME) {
@@ -367,20 +369,32 @@ public class Parser {
     private FunctionCall nextFunctionCall(Tokenizer tokenizer) throws IOException {
         var name = nextExpectedFunction(tokenizer).text();
         var fn = Objects.requireNonNull(functions.get(name), "Not function found for: " + name);
+        var args = nextFunctionParams(tokenizer);
+        var argTypes = args.stream()
+            .map(Expression::getDataType)
+            .toList();
+        if (!fn.argTypes().equals(argTypes)) {
+            throw parseError("Wrong args type for: " + name + " expected: " + fn.argTypes() + ", but got: " + argTypes);
+        }
+        return new FunctionCall(fn, args);
+    }
+
+    private List<Expression> nextFunctionParams(Tokenizer tokenizer) throws IOException {
         nextExpectedSymbol(tokenizer, "(");
         var args = new ArrayList<Expression>();
-        for (var argType: fn.argTypes()) {
+        while (!isNextTokenClosingBracket(tokenizer)) {
             if (!args.isEmpty()) {
                 nextExpectedSymbol(tokenizer, ",");
             }
             var arg = nextExpression(tokenizer);
-            if (arg.getDataType() != argType) {
-                throw parseError("Expected: " + argType);
-            }
             args.add(arg);
         }
         nextExpectedSymbol(tokenizer, ")");
-        return new FunctionCall(fn, args);
+        return args;
+    }
+
+    private boolean isNextTokenClosingBracket(Tokenizer tokenizer) throws IOException {
+        return tokenizer.peek().type() == Token.Type.SYMBOL && ")".equals(tokenizer.peek().text());
     }
 
     private Expression nextSubExpression(Tokenizer tokenizer) throws IOException {
@@ -437,27 +451,19 @@ public class Parser {
         return new LetStatement(name, expression);
     }
 
+    private DimStatement nextDimStatement(Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.DIM);
+        var name = nextExpectedName(tokenizer).text();
+        var args = nextFunctionParams(tokenizer);
+        return new DimStatement(name, DataType.fromVarName(name), args);
+    }
+
     private VarName nextVarName(Tokenizer tokenizer) throws IOException {
         var name = nextExpectedName(tokenizer).text();
         var dataType = DataType.fromVarName(name);
         var peek = tokenizer.peek();
         if (peek.type() == Token.Type.SYMBOL && peek.text().equals("(")) {
-            nextExpectedSymbol(tokenizer, "(");
-            var indexes = new ArrayList<Expression>();
-            var done = false;
-            var first = true;
-            while (!done) {
-                var next = tokenizer.peek();
-                if (next.type() == Token.Type.SYMBOL && next.text().equals(")")) {
-                    done = true;
-                } else {
-                    if (!first) {
-                        nextExpectedSymbol(tokenizer, ",");
-                    }
-                    indexes.add(nextExpression(tokenizer));
-                }
-            }
-            nextExpectedSymbol(tokenizer, ")");
+            var indexes = nextFunctionParams(tokenizer);
             // append brackets to name so we don't clash with scalar types when assigning
             // local vars
             return new VarName(name + "()", dataType, indexes);

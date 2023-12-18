@@ -1,6 +1,7 @@
 import ast.AstVisitor;
 import ast.BinaryExpression;
 import ast.DataStatement;
+import ast.DimStatement;
 import ast.EndStatement;
 import ast.Equals;
 import ast.Expression;
@@ -130,6 +131,20 @@ public class ProgramListing implements AstVisitor {
             visit(name);
             first = false;
         }
+    }
+
+    @Override
+    public void visit(DimStatement statement) {
+        System.out.print("DIM " + statement.name() + "(");
+        var first = true;
+        for (var size: statement.sizes()) {
+            if (!first) {
+                System.out.print(",");
+            }
+            size.visit(this);
+            first = false;
+        }
+        System.out.print(")");
     }
 
     @Override

@@ -1,7 +1,9 @@
+import ast.ArrayDim;
 import ast.AstVisitor;
 import ast.BinaryExpression;
 import ast.DataStatement;
 import ast.DataType;
+import ast.DimStatement;
 import ast.EndStatement;
 import ast.Equals;
 import ast.Expression;
@@ -99,7 +101,6 @@ import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.ISUB;
 import static org.objectweb.asm.Opcodes.NOP;
-import static org.objectweb.asm.Opcodes.POP2;
 import static org.objectweb.asm.Opcodes.PUTFIELD;
 import static org.objectweb.asm.Opcodes.RETURN;
 
@@ -114,6 +115,7 @@ public class JavaASM implements AstVisitor {
     private final Set<Label> targetLabels = new HashSet<>();
     private final List<Label> returnLabels = new ArrayList<>();
     private final Set<VarName> declaredVariables = new HashSet<>();
+    private final Map<String, ArrayDim> dimensionedArrays = new HashMap<>();
     private final AtomicInteger nextForNum = new AtomicInteger(1);
     private final Deque<OpenForStatement> openForStatements = new ArrayDeque<>();
     private final List<Consumer<MethodVisitor>> methodCallbacks = new ArrayList<>();
@@ -437,6 +439,18 @@ public class JavaASM implements AstVisitor {
     }
 
     @Override
+    public void visit(DimStatement statement) {
+        var name = statement.name();
+        var dim = statement.getArrayDimensions();
+        if (dimensionedArrays.put(dim.name(), statement.getArrayDimensions()) != null) {
+            throw new IllegalStateException("Cannot re-dim array: " + name);
+        }
+        addCallback(methodVisitor -> {
+            visitArrayCreate(methodVisitor, statement.getArrayDimensions(), statement.sizes());
+        });
+    }
+
+    @Override
     public void visit(LetStatement statement) {
         var varName = statement.name();
         createLocalVarIndex(varName);
@@ -446,11 +460,11 @@ public class JavaASM implements AstVisitor {
     }
 
     private void varStore(MethodVisitor methodVisitor, VarName varName, Runnable value) {
-        var index = getLocalVarIndex(varName);
+        var varIndex = getLocalVarIndex(varName);
         var dataType = varName.dataType();
         if (varName.isArray()) {
-            methodVisitor.visitVarInsn(ALOAD, index);
-            visitArrayIndex(methodVisitor, varName.indexes().get(0));
+            methodVisitor.visitVarInsn(ALOAD, varIndex);
+            visitArrayIndexes(methodVisitor, varName.indexes());
             value.run();
             var store = switch (dataType) {
                 case FLOAT -> FASTORE;
@@ -463,8 +477,18 @@ public class JavaASM implements AstVisitor {
                 case FLOAT -> FSTORE;
                 case STRING -> ASTORE;
             };
-            methodVisitor.visitVarInsn(store, index);
+            methodVisitor.visitVarInsn(store, varIndex);
         }
+    }
+
+    private void visitArrayIndexes(MethodVisitor methodVisitor, List<Expression> indexes) {
+        var innerIndexes = indexes.subList(0, indexes.size() - 1);
+        for (var index: innerIndexes) {
+            visitArrayIndex(methodVisitor, index);
+            methodVisitor.visitInsn(AALOAD);
+        }
+        var outerIndex = indexes.get(indexes.size() - 1);
+        visitArrayIndex(methodVisitor, outerIndex);
     }
 
     private void visitArrayIndex(MethodVisitor methodVisitor, Expression expression) {
@@ -488,18 +512,18 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(Variable expression) {
         var varName = expression.name();
-        var index = getLocalVarIndex(varName.name());
+        var varIndex = getLocalVarIndex(varName.name());
         if (varName.isArray()) {
-            currentMethodVisitor.visitVarInsn(ALOAD, index);
-            visitArrayIndex(currentMethodVisitor, varName.indexes().get(0));
+            currentMethodVisitor.visitVarInsn(ALOAD, varIndex);
+            visitArrayIndexes(currentMethodVisitor, varName.indexes());
             switch (varName.dataType()) {
                 case FLOAT -> currentMethodVisitor.visitInsn(FALOAD);
                 case STRING -> currentMethodVisitor.visitInsn(AALOAD);
             }
         } else {
             switch (varName.dataType()) {
-                case FLOAT -> currentMethodVisitor.visitVarInsn(FLOAD, index);
-                case STRING -> currentMethodVisitor.visitVarInsn(ALOAD, index);
+                case FLOAT -> currentMethodVisitor.visitVarInsn(FLOAD, varIndex);
+                case STRING -> currentMethodVisitor.visitVarInsn(ALOAD, varIndex);
             }
         }
     }
@@ -681,16 +705,41 @@ public class JavaASM implements AstVisitor {
         var arrayDims = declaredVariables.stream()
             .filter(VarName::isArray)
             .map(VarName::getArrayDimensions)
-            .collect(Collectors.toSet());
-        for (var arrayDim: arrayDims) {
-            if (arrayDim.dimensions() > 1) {
-                throw new IllegalStateException("Only one dimensional arrays supported");
+            .collect(Collectors.groupingBy(ArrayDim::name, Collectors.toSet()));
+        for (var entry: arrayDims.entrySet()) {
+            var name = entry.getKey();
+            var values = entry.getValue();
+            if (values.size() > 1) {
+                throw new IllegalStateException(name + " uses differing number of array dimensions: " + values);
             }
-            var index = getLocalVarIndex(arrayDim.name());
-            methodVisitor.visitLdcInsn(10);
-            methodVisitor.visitMultiANewArrayInsn("[" + toDescriptorString(arrayDim.dataType()), arrayDim.dimensions());
-            methodVisitor.visitVarInsn(ASTORE, index);
+            var arrayDim = values.iterator().next();
+            var dimension = dimensionedArrays.get(name);
+            if (dimension != null) {
+                if (!arrayDim.equals(dimension)) {
+                    throw new IllegalStateException(name + " was dimension as: " + dimension + ", but variable expected: " + arrayDim);
+                }
+                continue;
+            }
+            // create array of default size 10 if none has already been DIM'd
+            if (arrayDim.dimensions() != 1) {
+                throw new IllegalStateException("Can only use 1-dimensional arrays without DIMing first");
+            }
+            visitArrayCreate(methodVisitor, arrayDim, List.of(new FloatConstant(10.0f)));
         }
+    }
+
+    private void visitArrayCreate(MethodVisitor methodVisitor, ArrayDim arrayDim, List<Expression> sizes) {
+        var index = getLocalVarIndex(arrayDim.name());
+        for (var size: sizes) {
+            size.visit(this);
+            methodVisitor.visitInsn(F2I);
+        }
+
+        methodVisitor.visitMultiANewArrayInsn(
+            "[".repeat(arrayDim.dimensions()) + toDescriptorString(arrayDim.dataType()),
+            arrayDim.dimensions()
+        );
+        methodVisitor.visitVarInsn(ASTORE, index);
     }
 
     private void addCallback(Consumer<MethodVisitor> callback) {
