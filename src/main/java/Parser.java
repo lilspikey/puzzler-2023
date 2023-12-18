@@ -122,7 +122,7 @@ public class Parser {
                     continue;
                 }
             }
-            throw new IllegalArgumentException("Expected end of line or end of file, got:" + next);
+            throw parseError("Expected end of line or end of file, got:" + next);
         }
         return statements;
     }
