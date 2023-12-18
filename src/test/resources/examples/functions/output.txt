@@ -21,3 +21,5 @@ HELLO
 HELL
 HEL
 ELL
+-1  0  1 
+ A

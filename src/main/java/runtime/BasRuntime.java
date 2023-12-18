@@ -54,6 +54,20 @@ public class BasRuntime implements Runnable {
         return c;
     }
 
+    String fnCHR_DOLLAR(float f) {
+        return String.valueOf((char) f);
+    }
+    
+    float fnSGN(float f) {
+        if (f < 0.0f) {
+            return -1.0f;
+        }
+        if (f > 0.0f) {
+            return 1.0f;
+        }
+        return 0.0f;
+    }
+
     float fnLEN(String s) {
         return s.length();
     }
