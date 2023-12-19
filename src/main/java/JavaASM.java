@@ -53,6 +53,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -141,7 +143,9 @@ public class JavaASM implements AstVisitor {
                     currentMethodVisitor = methodVisitor;
                     methodVisitor.visitCode();
                     storeDataConstants(methodVisitor);
-                    initArrays(methodVisitor);
+                    var defaultArrays = checkForDefaultArrays();
+                    initLocalVars(methodVisitor);
+                    initDefaultArrays(methodVisitor, defaultArrays);
                     for (var callback: methodCallbacks) {
                         callback.accept(methodVisitor);
                     }
@@ -703,11 +707,12 @@ public class JavaASM implements AstVisitor {
         methodVisitor.visitFieldInsn(PUTFIELD, className, "data", "[" + Object.class.descriptorString());
     }
 
-    private void initArrays(MethodVisitor methodVisitor) {
+    private List<ArrayDim> checkForDefaultArrays() {
         var arrayDims = declaredVariables.stream()
-            .filter(VarName::isArray)
-            .map(VarName::getArrayDimensions)
-            .collect(Collectors.groupingBy(ArrayDim::name, Collectors.toSet()));
+                .filter(VarName::isArray)
+                .map(VarName::getArrayDimensions)
+                .collect(Collectors.groupingBy(ArrayDim::name, Collectors.toSet()));
+        var defaultArrays = new ArrayList<ArrayDim>();
         for (var entry: arrayDims.entrySet()) {
             var name = entry.getKey();
             var values = entry.getValue();
@@ -726,11 +731,43 @@ public class JavaASM implements AstVisitor {
             if (arrayDim.dimensions() != 1) {
                 throw new IllegalStateException("Can only use 1-dimensional arrays without DIMing first");
             }
+            defaultArrays.add(arrayDim);
+        }
+        return defaultArrays;
+    }
+
+    private void initLocalVars(MethodVisitor methodVisitor) {
+        // this is done to ensure all variables have the scope of the entire run() method
+        // to simplify things (scoping in BASIC is less specific than Java)
+        for (var var: declaredVariables) {
+            if (var.isArray()) {
+                var arrayDim = var.getArrayDimensions();
+                var sizes = Collections.nCopies(arrayDim.dimensions(), 0.0f).stream()
+                        .map(FloatConstant::new)
+                        .toList();
+                visitArrayCreate(methodVisitor, arrayDim, sizes);
+            } else {
+                switch (var.dataType()) {
+                    case FLOAT -> {
+                        methodVisitor.visitLdcInsn(0.0f);
+                        methodVisitor.visitVarInsn(FSTORE, getLocalVarIndex(var));
+                    }
+                    case STRING -> {
+                        methodVisitor.visitLdcInsn("");
+                        methodVisitor.visitVarInsn(ASTORE, getLocalVarIndex(var));
+                    }
+                };
+            }
+        }
+    }
+
+    private void initDefaultArrays(MethodVisitor methodVisitor, List<ArrayDim> defaultArrays) {
+        for (var arrayDim: defaultArrays) {
             visitArrayCreate(methodVisitor, arrayDim, List.of(new FloatConstant(10.0f)));
         }
     }
 
-    private void visitArrayCreate(MethodVisitor methodVisitor, ArrayDim arrayDim, List<Expression> sizes) {
+    private void visitArrayCreate(MethodVisitor methodVisitor, ArrayDim arrayDim, List<? extends Expression> sizes) {
         var index = getLocalVarIndex(arrayDim.name());
         for (var size: sizes) {
             size.visit(this);

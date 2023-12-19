@@ -137,5 +137,7 @@ might not be so good.
 * Currently not everything is supported, but a few of the programs from http://www.vintage-basic.net/games.html
   should run:
   * http://www.vintage-basic.net/bcg/aceyducey.bas
+  * http://www.vintage-basic.net/bcg/bagels.bas
   * http://www.vintage-basic.net/bcg/banner.bas
+  * http://www.vintage-basic.net/bcg/digits.bas
   * http://www.vintage-basic.net/bcg/hi-lo.bas
