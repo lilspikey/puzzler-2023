@@ -17,5 +17,7 @@ public enum Keyword {
     READ,
     RESTORE,
     LET,
-    DIM
+    DIM,
+    AND,
+    OR
 }

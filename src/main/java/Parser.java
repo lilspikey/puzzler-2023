@@ -1,3 +1,4 @@
+import ast.AndExpression;
 import ast.ArrayInit;
 import ast.DataStatement;
 import ast.DataType;
@@ -26,6 +27,7 @@ import ast.LetStatement;
 import ast.Line;
 import ast.NextStatement;
 import ast.NotEquals;
+import ast.OrExpression;
 import ast.PrintSeperator;
 import ast.PrintStatement;
 import ast.Printable;
@@ -54,22 +56,24 @@ import java.util.function.Function;
 
 public class Parser {
     private final Map<String, UnaryOperatorInfo> unaryOperators = Map.of(
-        "-", new UnaryOperatorInfo(5, FloatNegation::new),
-        "+", new UnaryOperatorInfo(5, Function.identity())
+        "-", new UnaryOperatorInfo(7, FloatNegation::new),
+        "+", new UnaryOperatorInfo(7, Function.identity())
     );
     private final Map<String, BinaryOperatorInfo> binaryOperators = new HashMap<>();
     {
-        binaryOperators.put("=", new BinaryOperatorInfo(1, Associativity.LEFT, Equals::new));
-        binaryOperators.put("<>", new BinaryOperatorInfo(1, Associativity.LEFT, NotEquals::new));
-        binaryOperators.put(">", new BinaryOperatorInfo(1, Associativity.LEFT, GreaterThan::new));
-        binaryOperators.put(">=", new BinaryOperatorInfo(1, Associativity.LEFT, GreaterThanEquals::new));
-        binaryOperators.put("<", new BinaryOperatorInfo(1, Associativity.LEFT, LessThan::new));
-        binaryOperators.put("<=", new BinaryOperatorInfo(1, Associativity.LEFT, LessThanEquals::new));
-        binaryOperators.put("+", new BinaryOperatorInfo(2, Associativity.LEFT, FloatAddition::new));
-        binaryOperators.put("-", new BinaryOperatorInfo(2, Associativity.LEFT, FloatSubtraction::new));
-        binaryOperators.put("*", new BinaryOperatorInfo(3, Associativity.LEFT, FloatMultiplication::new));
-        binaryOperators.put("/", new BinaryOperatorInfo(4, Associativity.LEFT, FloatDivision::new));
-        binaryOperators.put("^", new BinaryOperatorInfo(5, Associativity.RIGHT, FloatPower::new));
+        binaryOperators.put("OR", new BinaryOperatorInfo(1, Associativity.LEFT, OrExpression::new));
+        binaryOperators.put("AND", new BinaryOperatorInfo(2, Associativity.LEFT, AndExpression::new));
+        binaryOperators.put("=", new BinaryOperatorInfo(3, Associativity.LEFT, Equals::new));
+        binaryOperators.put("<>", new BinaryOperatorInfo(3, Associativity.LEFT, NotEquals::new));
+        binaryOperators.put(">", new BinaryOperatorInfo(3, Associativity.LEFT, GreaterThan::new));
+        binaryOperators.put(">=", new BinaryOperatorInfo(3, Associativity.LEFT, GreaterThanEquals::new));
+        binaryOperators.put("<", new BinaryOperatorInfo(3, Associativity.LEFT, LessThan::new));
+        binaryOperators.put("<=", new BinaryOperatorInfo(3, Associativity.LEFT, LessThanEquals::new));
+        binaryOperators.put("+", new BinaryOperatorInfo(4, Associativity.LEFT, FloatAddition::new));
+        binaryOperators.put("-", new BinaryOperatorInfo(4, Associativity.LEFT, FloatSubtraction::new));
+        binaryOperators.put("*", new BinaryOperatorInfo(5, Associativity.LEFT, FloatMultiplication::new));
+        binaryOperators.put("/", new BinaryOperatorInfo(5, Associativity.LEFT, FloatDivision::new));
+        binaryOperators.put("^", new BinaryOperatorInfo(6, Associativity.RIGHT, FloatPower::new));
     }
 
     private String currentLineNumber;
@@ -314,13 +318,12 @@ public class Parser {
     private Expression nextExpression(Tokenizer tokenizer, int minPrecedence) throws IOException {
         var lhs = nextAtomExpression(tokenizer);
         while (true) {
-            var maybeOp = tokenizer.peek();
-            if (maybeOp.type() == Token.Type.SYMBOL && binaryOperators.containsKey(maybeOp.text())) {
-                var operatorInfo = binaryOperators.get(maybeOp.text());
+            if (isNextTokenBinaryOperator(tokenizer)) {
+                var operatorInfo = binaryOperators.get(tokenizer.peek().text());
                 if (operatorInfo.precedence() < minPrecedence) {
                     break;
                 }
-                nextExpectedSymbol(tokenizer);
+                tokenizer.next();
                 var nextPrecedence = switch (operatorInfo.associativity()) {
                     case LEFT -> operatorInfo.precedence() + 1;
                     case RIGHT -> operatorInfo.precedence();
@@ -332,6 +335,12 @@ public class Parser {
             }
         }
         return lhs;
+    }
+
+    private boolean isNextTokenBinaryOperator(Tokenizer tokenizer) throws IOException {
+        var maybeOp = tokenizer.peek();
+        return (maybeOp.type() == Token.Type.SYMBOL || maybeOp.type() == Token.Type.KEYWORD)
+            && binaryOperators.containsKey(maybeOp.text());
     }
 
     private Expression nextAtomExpression(Tokenizer tokenizer) throws IOException {

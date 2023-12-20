@@ -20,7 +20,7 @@ class IntegrationTest {
     @ParameterizedTest
     @ValueSource(strings = {
             "hello", "loop", "expressions", "if", "comparisons", "functions", "end", "strings", "data",
-            "gosub", "datatypes", "input", "arrays"
+            "gosub", "datatypes", "input", "arrays", "boolean"
     })
     void givenSource_whenCompilingAndRunning_thenCorrectOutputGenerated(String exampleDir) throws Exception {
         var javaAsm = new JavaASM();

@@ -1,0 +1,12 @@
+A >= 1 AND B >= 2 -> 0 
+A > 1 AND B >= 2 ->-1 
+A >= 1 AND B > 2 ->-1 
+A > 1 AND B > 2 ->-1 
+A >= 1 AND B >= 2
+A >= 1 OR B >= 2 -> 0 
+A > 1 OR B >= 2 -> 0 
+A >= 1 OR B > 2 -> 0 
+A > 1 OR B > 2 ->-1 
+A >= 1 OR B >= 2
+A > 1 OR B >= 2
+A >= 1 OR B > 2

@@ -63,6 +63,10 @@ public interface AstVisitor {
 
     void visit(LessThanEquals expression);
 
+    void visit(AndExpression expression);
+
+    void visit(OrExpression expression);
+
     void visit(FloatAddition expression);
 
     void visit(FloatSubtraction expression);

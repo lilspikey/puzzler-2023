@@ -1,3 +1,4 @@
+import ast.AndExpression;
 import ast.AstVisitor;
 import ast.BinaryExpression;
 import ast.DataStatement;
@@ -26,6 +27,7 @@ import ast.LetStatement;
 import ast.Line;
 import ast.NextStatement;
 import ast.NotEquals;
+import ast.OrExpression;
 import ast.PrintSeperator;
 import ast.PrintStatement;
 import ast.ReadStatement;
@@ -278,6 +280,16 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(LessThanEquals expression) {
         binaryExpression("<=", expression);
+    }
+
+    @Override
+    public void visit(AndExpression expression) {
+        binaryExpression("AND", expression);
+    }
+
+    @Override
+    public void visit(OrExpression expression) {
+        binaryExpression("OR", expression);
     }
 
     @Override

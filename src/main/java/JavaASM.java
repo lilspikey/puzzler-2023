@@ -1,3 +1,4 @@
+import ast.AndExpression;
 import ast.ArrayDim;
 import ast.AstVisitor;
 import ast.BinaryExpression;
@@ -28,6 +29,7 @@ import ast.LetStatement;
 import ast.Line;
 import ast.NextStatement;
 import ast.NotEquals;
+import ast.OrExpression;
 import ast.PrintSeperator;
 import ast.PrintStatement;
 import ast.Printable;
@@ -103,6 +105,7 @@ import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.ISUB;
 import static org.objectweb.asm.Opcodes.NOP;
+import static org.objectweb.asm.Opcodes.POP;
 import static org.objectweb.asm.Opcodes.PUTFIELD;
 import static org.objectweb.asm.Opcodes.RETURN;
 
@@ -611,6 +614,29 @@ public class JavaASM implements AstVisitor {
         visitLabelIfTargeted(currentMethodVisitor, trueLabel);
         currentMethodVisitor.visitInsn(FCONST_0);
         visitLabelIfTargeted(currentMethodVisitor, falseLabel);
+        currentMethodVisitor.visitInsn(NOP);
+    }
+
+    @Override
+    public void visit(AndExpression expression) {
+        booleanShortCircuit(expression, IFNE);
+    }
+
+    @Override
+    public void visit(OrExpression expression) {
+        booleanShortCircuit(expression, IFEQ);
+    }
+
+    private void booleanShortCircuit(BinaryExpression expression, int opcode) {
+        expression.lhs().visit(this);
+        currentMethodVisitor.visitInsn(DUP);
+        currentMethodVisitor.visitInsn(F2I);
+        var label = newTargettedLabel();
+        // if can jump past the 2nd expression if the 1st expression evaluates the right way
+        currentMethodVisitor.visitJumpInsn(opcode, label);
+        currentMethodVisitor.visitInsn(POP);
+        expression.rhs().visit(this);
+        currentMethodVisitor.visitLabel(label);
         currentMethodVisitor.visitInsn(NOP);
     }
 
