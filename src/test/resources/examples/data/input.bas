@@ -4,7 +4,7 @@
 40 PRINT A$, B
 50 DATA "Data 1", 10
 60 DATA "Data 2", 20
-70 DATA "Data 3", 30
+70 DATA "Data 3", -30
 80 READ A$, B
 90 PRINT A$, B
 100 RESTORE

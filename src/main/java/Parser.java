@@ -256,6 +256,12 @@ public class Parser {
                     first = false;
                     var constantToken = tokenizer.next();
                     var constant = switch (constantToken.type()) {
+                        case SYMBOL -> {
+                            if (constantToken.text().equals("-")) {
+                                yield -Float.parseFloat(nextExpectedNumber(tokenizer).text());
+                            }
+                            throw parseError("Unexpected token: " + constantToken);
+                        }
                         case NUMBER -> Float.parseFloat(constantToken.text());
                         case STRING -> constantToken.text();
                         default -> {
