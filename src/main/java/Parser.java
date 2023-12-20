@@ -49,10 +49,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class Parser {
     private final Map<String, UnaryOperatorInfo> unaryOperators = Map.of(
@@ -73,9 +71,6 @@ public class Parser {
         binaryOperators.put("/", new BinaryOperatorInfo(4, Associativity.LEFT, FloatDivision::new));
         binaryOperators.put("^", new BinaryOperatorInfo(5, Associativity.RIGHT, FloatPower::new));
     }
-
-    private final Map<String, FunctionDef> functions = FunctionDef.getFunctionDefs().stream()
-        .collect(Collectors.toMap(FunctionDef::name, Function.identity()));
 
     private String currentLineNumber;
 
@@ -369,8 +364,16 @@ public class Parser {
 
     private FunctionCall nextFunctionCall(Tokenizer tokenizer) throws IOException {
         var name = nextExpectedFunction(tokenizer).text();
-        var fn = Objects.requireNonNull(functions.get(name), "Not function found for: " + name);
+        var functions = FunctionDef.findFunctions(name);
+        if (functions.isEmpty()) {
+            throw parseError("No function found for: " + name);
+        }
         var args = nextFunctionParams(tokenizer);
+        var fn = functions.stream()
+            .filter(f -> f.argTypes().size() == args.size())
+            .findFirst()
+            .orElseThrow(() -> parseError(name + " does not take: " + args.size() + " parameters"));
+        
         var argTypes = args.stream()
             .map(Expression::getDataType)
             .toList();

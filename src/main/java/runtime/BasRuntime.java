@@ -1,6 +1,5 @@
 package runtime;
 
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.text.MessageFormat;
 import java.util.InputMismatchException;
@@ -76,7 +75,10 @@ public class BasRuntime implements Runnable {
         return s.substring(0, Math.min((int) len, s.length()));
     }
 
-    // TODO support overloading for the 2 arg version of MID$
+    String fnMID_DOLLAR(String s, float i) {
+        return fnMID_DOLLAR(s, i, s.length());
+    }
+
     String fnMID_DOLLAR(String s, float i, float len) {
         var index = (int)(i - 1.0f);
         return s.substring(index, Math.min(index + (int) len, s.length()));
