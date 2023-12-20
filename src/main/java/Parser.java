@@ -127,6 +127,13 @@ public class Parser {
         }
         return statements;
     }
+    
+    private boolean isEndOfStatement(Token token) {
+        if (token.type() == Token.Type.EOL || token.type() == Token.Type.EOF) {
+            return true;
+        }
+        return token.type() == Token.Type.SYMBOL && ":".equals(token.text());
+    }
 
     private Statement nextStatement(Tokenizer tokenizer) throws IOException {
         var first = tokenizer.peek();
@@ -202,36 +209,31 @@ public class Parser {
         var done = false;
         while (!done) {
             var next = tokenizer.peek();
-            switch (next.type()) {
-                case EOL, EOF -> done = true;
-                default -> {
-                    if (next.type() == Token.Type.SYMBOL && ":".equals(next.text())) {
-                        done = true;
-                    } else {
-                        var expression = nextExpression(tokenizer);
-                        printables.add(expression);
-                        var peek = tokenizer.peek();
-                        if (peek.type() == Token.Type.SYMBOL) {
-                            switch (peek.text()) {
-                                case ";" -> {
-                                    nextExpectedSymbol(tokenizer, ";");
-                                    printables.add(PrintSeperator.NONE);
-                                }
-                                case "," -> {
-                                    nextExpectedSymbol(tokenizer, ",");
-                                    printables.add(PrintSeperator.ZONE);
-                                }
-                                case ":" -> {
-                                    done = true;
-                                }
-                                default -> {
-                                    throw parseError("Unexpected symbol: " + peek);
-                                }
-                            }
-                        } else if (peek.type() != Token.Type.EOL && peek.type() != Token.Type.EOF){
+            if (isEndOfStatement(next)) {
+                done = true;
+            } else {
+                var expression = nextExpression(tokenizer);
+                printables.add(expression);
+                var peek = tokenizer.peek();
+                if (peek.type() == Token.Type.SYMBOL) {
+                    switch (peek.text()) {
+                        case ";" -> {
+                            nextExpectedSymbol(tokenizer, ";");
+                            printables.add(PrintSeperator.NONE);
+                        }
+                        case "," -> {
+                            nextExpectedSymbol(tokenizer, ",");
+                            printables.add(PrintSeperator.ZONE);
+                        }
+                        case ":" -> {
+                            done = true;
+                        }
+                        default -> {
                             throw parseError("Unexpected symbol: " + peek);
                         }
                     }
+                } else if (peek.type() != Token.Type.EOL && peek.type() != Token.Type.EOF){
+                    throw parseError("Unexpected symbol: " + peek);
                 }
             }
         }
@@ -279,16 +281,15 @@ public class Parser {
         var first = true;
         while (!done) {
             var next = tokenizer.peek();
-            switch (next.type()) {
-                case EOL, EOF -> done = true;
-                default -> {
-                    if (!first) {
-                        nextExpectedSymbol(tokenizer, ",");
-                    }
-                    first = false;
-                    var name = nextVarName(tokenizer);
-                    names.add(name);
+            if (isEndOfStatement(next)) {
+                done = true;
+            } else {
+                if (!first) {
+                    nextExpectedSymbol(tokenizer, ",");
                 }
+                first = false;
+                var name = nextVarName(tokenizer);
+                names.add(name);
             }
         }
         return names;
@@ -491,8 +492,8 @@ public class Parser {
             var name = nextExpectedName(tokenizer).text();
             var args = nextFunctionParams(tokenizer);
             arrays.add(new ArrayInit(name, DataType.fromVarName(name), args));
-            switch(tokenizer.peek().type()) {
-                case EOF, EOL -> done = true;
+            if (isEndOfStatement(tokenizer.peek())) {
+                done = true;
             }
         }
         return new DimStatement(arrays);
