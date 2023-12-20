@@ -12,6 +12,8 @@ public interface AstVisitor {
     void visit(PrintStatement statement);
 
     void visit(GotoStatement statement);
+    
+    void visit(OnGotoStatement statement);
 
     void visit(GoSubStatement statement);
 

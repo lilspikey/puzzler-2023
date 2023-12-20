@@ -27,6 +27,7 @@ import ast.LetStatement;
 import ast.Line;
 import ast.NextStatement;
 import ast.NotEquals;
+import ast.OnGotoStatement;
 import ast.OrExpression;
 import ast.PrintSeperator;
 import ast.PrintStatement;
@@ -103,6 +104,14 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(ReturnStatement statement) {
         System.out.print("RETURN");
+    }
+
+    @Override
+    public void visit(OnGotoStatement statement) {
+        System.out.print("ON ");
+        statement.expression().visit(this);
+        System.out.print(" GOTO ");
+        System.out.print(String.join(",", statement.destinationLabels()));
     }
 
     @Override

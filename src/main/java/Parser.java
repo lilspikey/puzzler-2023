@@ -27,6 +27,7 @@ import ast.LetStatement;
 import ast.Line;
 import ast.NextStatement;
 import ast.NotEquals;
+import ast.OnGotoStatement;
 import ast.OrExpression;
 import ast.PrintSeperator;
 import ast.PrintStatement;
@@ -133,6 +134,7 @@ public class Parser {
             return switch (first.asKeyword()) {
                 case PRINT -> nextPrintStatement(tokenizer);
                 case GO -> nextGoStatement(tokenizer);
+                case ON -> nextOnStatement(tokenizer);
                 case RETURN -> newReturnStatement(tokenizer);
                 case IF -> nextIfStatement(tokenizer);
                 case INPUT -> nextInputStatement(tokenizer);
@@ -426,6 +428,20 @@ public class Parser {
             case SUB -> new GoSubStatement(destinationLabel.text());
             default -> throw parseError("Unexpected token: " + token);
         };
+    }
+    
+    private OnGotoStatement nextOnStatement(Tokenizer tokenizer) throws IOException {
+        nextExpectedKeyword(tokenizer, Keyword.ON);
+        var expression = nextExpression(tokenizer);
+        nextExpectedKeyword(tokenizer, Keyword.GO);
+        nextExpectedKeyword(tokenizer, Keyword.TO);
+        var destinationLabels = new ArrayList<String>();
+        destinationLabels.add(nextExpectedNumber(tokenizer).text());
+        while (tokenizer.peek().type() == Token.Type.SYMBOL && tokenizer.peek().text().equals(",")) {
+            nextExpectedSymbol(tokenizer, ",");
+            destinationLabels.add(nextExpectedNumber(tokenizer).text());
+        }
+        return new OnGotoStatement(expression, destinationLabels);
     }
 
     private ReturnStatement newReturnStatement(Tokenizer tokenizer) throws IOException {

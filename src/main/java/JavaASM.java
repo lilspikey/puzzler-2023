@@ -29,6 +29,7 @@ import ast.LetStatement;
 import ast.Line;
 import ast.NextStatement;
 import ast.NotEquals;
+import ast.OnGotoStatement;
 import ast.OrExpression;
 import ast.PrintSeperator;
 import ast.PrintStatement;
@@ -238,9 +239,6 @@ public class JavaASM implements AstVisitor {
     @Override
     public void visit(GotoStatement statement) {
         var label = targetLineLabel(statement.destinationLabel());
-        if (label == null) {
-            throw new IllegalStateException("Unknown destination label: " + statement);
-        }
         addCallback(methodVisitor -> {
             methodVisitor.visitJumpInsn(GOTO, label);
         });
@@ -283,6 +281,24 @@ public class JavaASM implements AstVisitor {
                     className,
                     "runtimeError",
                     "(Ljava/lang/String;)V");
+        });
+    }
+
+    @Override
+    public void visit(OnGotoStatement statement) {
+        var labels = statement.destinationLabels().stream()
+            .map(this::targetLineLabel)
+            .toArray(Label[]::new);
+        var defaultLabel = newTargettedLabel();
+        addCallback(methodVisitor -> {
+            statement.expression().visit(this);
+            methodVisitor.visitInsn(F2I);
+            var keys = IntStream.range(0, labels.length)
+                .map(i -> i + 1)
+                .toArray();
+            methodVisitor.visitLookupSwitchInsn(defaultLabel, keys, labels);
+            methodVisitor.visitLabel(defaultLabel);
+            methodVisitor.visitInsn(NOP);
         });
     }
 
@@ -826,6 +842,9 @@ public class JavaASM implements AstVisitor {
 
     private Label targetLineLabel(String lineLabel) {
         var label = linesToLabels.get(lineLabel);
+        if (label == null) {
+            throw new IllegalStateException("Unknown destination label: " + lineLabel);
+        }
         targetLabels.add(label);
         return label;
     }
