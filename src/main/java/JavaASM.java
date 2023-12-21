@@ -265,7 +265,12 @@ public class JavaASM implements AstVisitor {
             throw new IllegalStateException("Unknown destination label: " + statement);
         }
         addCallback(methodVisitor -> {
+            methodVisitor.visitVarInsn(ALOAD, 0);
             methodVisitor.visitLdcInsn(returnIndex);
+            methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                className,
+                "pushReturnAddress",
+                "(I)V");
             methodVisitor.visitJumpInsn(GOTO, destinationLabel);
         });
     }
@@ -276,6 +281,11 @@ public class JavaASM implements AstVisitor {
             if (returnLabels.isEmpty()) {
                 throw new IllegalStateException("No matching GOSUB for RETURN");
             }
+            methodVisitor.visitVarInsn(ALOAD, 0);
+            methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                className,
+                "popReturnAddress",
+                "()I");
             var defaultLabel = newTargettedLabel();
             var keys = IntStream.range(0, returnLabels.size())
                 .toArray();

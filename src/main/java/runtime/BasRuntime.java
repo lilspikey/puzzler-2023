@@ -2,6 +2,8 @@ package runtime;
 
 import java.io.PrintStream;
 import java.text.MessageFormat;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.InputMismatchException;
 import java.util.Random;
 import java.util.Scanner;
@@ -21,6 +23,9 @@ public class BasRuntime implements Runnable {
     private float prevRandom;
     private Object[] data;
     private int nextDataPtr = 0;
+    // manually manage stack for GOSUB return addresses to workaround
+    // issues with verification/Java ASM
+    private final Deque<Integer> returnAddressStack = new ArrayDeque<>();
 
     float fnINT(float f) {
         return (int) f;
@@ -140,6 +145,14 @@ public class BasRuntime implements Runnable {
 
     void runtimeError(String error) {
         throw new RuntimeException(error);
+    }
+
+    void pushReturnAddress(int address) {
+        returnAddressStack.push(address);
+    }
+
+    int popReturnAddress() {
+        return returnAddressStack.pop();
     }
 
     @Override
