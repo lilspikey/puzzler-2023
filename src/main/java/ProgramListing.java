@@ -152,7 +152,7 @@ public class ProgramListing implements AstVisitor {
         var firstArray = true;
         for (var array: statement.arrays()) {
             if (!firstArray) {
-                System.out.println(",");
+                System.out.print(",");
             }
             System.out.print(array.name() + "(");
             var first = true;
