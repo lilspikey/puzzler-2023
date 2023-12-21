@@ -26,6 +26,10 @@ public class BasRuntime implements Runnable {
         return (int) f;
     }
 
+    float fnABS(float f) {
+        return Math.abs(f);
+    }
+
     float fnSIN(float f) {
         return (float) Math.sin(Math.toRadians(f));
     }
