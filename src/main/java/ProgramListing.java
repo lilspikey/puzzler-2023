@@ -224,8 +224,8 @@ public class ProgramListing implements AstVisitor {
     @Override
     public void visit(NextStatement statement) {
         System.out.print("NEXT");
-        if (statement.varname() != null) {
-            System.out.print(" " + statement.varname());
+        if (!statement.varnames().isEmpty()) {
+            System.out.print(" " + String.join(",", statement.varnames()));
         }
     }
 

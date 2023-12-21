@@ -1,6 +1,8 @@
 package ast;
 
-public record NextStatement(String varname) implements Statement {
+import java.util.List;
+
+public record NextStatement(List<String> varnames) implements Statement {
     @Override
     public void visit(AstVisitor visitor) {
         visitor.visit(this);

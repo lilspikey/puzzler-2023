@@ -25,3 +25,5 @@
 250 FOR I=4 TO 0 STEP -1
 260 PRINT I
 270 NEXT I
+280 PRINT "Nested one line loop with single NEXT"
+290 FOR X = 1 TO 4: FOR Y = 1 TO 3: PRINT X; Y: NEXT Y, X

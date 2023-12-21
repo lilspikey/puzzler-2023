@@ -191,11 +191,14 @@ public class Parser {
 
     private NextStatement nextNextStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.NEXT);
-        String varname = null;
-        if (tokenizer.peek().type() == Token.Type.NAME) {
-            varname = tokenizer.next().text();
+        var varnames = new ArrayList<String>();
+        while (!isEndOfStatement(tokenizer.peek())) {
+            if (!varnames.isEmpty()) {
+                nextExpectedSymbol(tokenizer, ",");
+            }
+            varnames.add(nextExpectedName(tokenizer).text());
         }
-        return new NextStatement(varname);
+        return new NextStatement(varnames);
     }
 
     private RemarkStatement nextComment(Tokenizer tokenizer) throws IOException {

@@ -56,7 +56,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
@@ -380,24 +379,26 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(NextStatement statement) {
-        var openFor = findMatchingForStatement(statement);
-        addCallback(methodVisitor -> {
-            // add increment to loop
-            methodVisitor.visitVarInsn(FLOAD, openFor.varIndex());
-            methodVisitor.visitVarInsn(FLOAD, openFor.incIndex());
-            methodVisitor.visitInsn(FADD);
-            methodVisitor.visitVarInsn(FSTORE, openFor.varIndex());
-            // see which direction the loop is going
-            methodVisitor.visitVarInsn(FLOAD, openFor.incIndex());
-            methodVisitor.visitLdcInsn(0.0f);
-            methodVisitor.visitInsn(FCMPG);
-            // then compare end vs var
-            methodVisitor.visitVarInsn(FLOAD, openFor.varIndex());
-            methodVisitor.visitVarInsn(FLOAD, openFor.endIndex());
-            methodVisitor.visitInsn(FCMPG);
-            // then see if the direction of the comparisons are the same or not
-            methodVisitor.visitJumpInsn(IF_ICMPNE, openFor.continueLabel());
-        });
+        var openFors = findMatchingForStatements(statement);
+        for (var openFor: openFors) {
+            addCallback(methodVisitor -> {
+                // add increment to loop
+                methodVisitor.visitVarInsn(FLOAD, openFor.varIndex());
+                methodVisitor.visitVarInsn(FLOAD, openFor.incIndex());
+                methodVisitor.visitInsn(FADD);
+                methodVisitor.visitVarInsn(FSTORE, openFor.varIndex());
+                // see which direction the loop is going
+                methodVisitor.visitVarInsn(FLOAD, openFor.incIndex());
+                methodVisitor.visitLdcInsn(0.0f);
+                methodVisitor.visitInsn(FCMPG);
+                // then compare end vs var
+                methodVisitor.visitVarInsn(FLOAD, openFor.varIndex());
+                methodVisitor.visitVarInsn(FLOAD, openFor.endIndex());
+                methodVisitor.visitInsn(FCMPG);
+                // then see if the direction of the comparisons are the same or not
+                methodVisitor.visitJumpInsn(IF_ICMPNE, openFor.continueLabel());
+            });
+        }
     }
 
     @Override
@@ -414,19 +415,26 @@ public class JavaASM implements AstVisitor {
         });
     }
 
-    private OpenForStatement findMatchingForStatement(NextStatement statement) {
-        if (statement.varname() == null) {
-            return openForStatements.pop();
+    private List<OpenForStatement> findMatchingForStatements(NextStatement statement) {
+        if (statement.varnames().isEmpty()) {
+            return List.of(openForStatements.pop());
         }
+        
+        return statement.varnames().stream()
+            .map(this::findMatchingForStatement)
+            .toList();
+    }
+    
+    private OpenForStatement findMatchingForStatement(String varname) {
         var it = openForStatements.iterator();
         while (it.hasNext()) {
             var forStatement = it.next();
-            if (forStatement.forStatement.varname().equals(statement.varname())) {
+            if (forStatement.forStatement.varname().equals(varname)) {
                 it.remove();
                 return forStatement;
             }
         }
-        throw new IllegalStateException("Could not find matching FOR for: " + statement);
+        throw new IllegalStateException("Could not find matching FOR for: " + varname);
     }
 
     @Override
