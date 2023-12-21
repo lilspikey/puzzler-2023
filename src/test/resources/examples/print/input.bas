@@ -1,0 +1,6 @@
+10 PRINT "Hello"
+20 PRINT 1 2 3
+30 PRINT -1 -2 -3
+40 PRINT "A" "B"
+50 PRINT "A";"B"
+60 PRINT "A","B"

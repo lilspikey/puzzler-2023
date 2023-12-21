@@ -215,6 +215,11 @@ public class Parser {
             if (isEndOfStatement(next)) {
                 done = true;
             } else {
+                if (!printables.isEmpty()) {
+                    if (!(printables.get(printables.size() - 1) instanceof PrintSeperator)) {
+                        printables.add(PrintSeperator.SPACE);
+                    }
+                }
                 var expression = nextExpression(tokenizer);
                 printables.add(expression);
                 var peek = tokenizer.peek();
@@ -235,8 +240,6 @@ public class Parser {
                             throw parseError("Unexpected symbol: " + peek);
                         }
                     }
-                } else if (peek.type() != Token.Type.EOL && peek.type() != Token.Type.EOF){
-                    throw parseError("Unexpected symbol: " + peek);
                 }
             }
         }

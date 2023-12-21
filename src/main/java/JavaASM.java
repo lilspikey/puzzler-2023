@@ -207,7 +207,15 @@ public class JavaASM implements AstVisitor {
         addCallback(methodVisitor -> {
             Printable lastPrintable = null;
             for (var printable: statement.printables()) {
-                if (printable == PrintSeperator.ZONE) {
+                if (printable == PrintSeperator.SPACE) {
+                    methodVisitor.visitVarInsn(ALOAD, 0);
+                    methodVisitor.visitLdcInsn(" ");
+                    var paramDescriptor = toDescriptorString(DataType.STRING);
+                    methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                            className,
+                            "print",
+                            String.format("(%s)V", paramDescriptor));
+                } else if (printable == PrintSeperator.ZONE) {
                     methodVisitor.visitVarInsn(ALOAD, 0);
                     methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
                         className,
