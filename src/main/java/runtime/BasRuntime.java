@@ -113,7 +113,7 @@ public class BasRuntime implements Runnable {
     }
 
     void nextPrintZone() {
-        var nextZone = currentTab % 14;
+        var nextZone = 14 - (currentTab % 14);
         for (var i = 0; i < nextZone; i++) {
             print(" ");
         }

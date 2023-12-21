@@ -140,6 +140,7 @@ might not be so good.
   * http://www.vintage-basic.net/bcg/amazing.bas
   * http://www.vintage-basic.net/bcg/bagels.bas
   * http://www.vintage-basic.net/bcg/banner.bas
+  * http://www.vintage-basic.net/bcg/bug.bas
   * http://www.vintage-basic.net/bcg/digits.bas
   * http://www.vintage-basic.net/bcg/hi-lo.bas
 * The program http://www.vintage-basic.net/bcg/checkers.bas seems to try to use 0-based arrays!

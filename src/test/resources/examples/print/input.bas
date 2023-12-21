@@ -4,3 +4,4 @@
 40 PRINT "A" "B"
 50 PRINT "A";"B"
 60 PRINT "A","B"
+70 PRINT ,"B"

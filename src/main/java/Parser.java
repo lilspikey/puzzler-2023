@@ -215,31 +215,20 @@ public class Parser {
             if (isEndOfStatement(next)) {
                 done = true;
             } else {
-                if (!printables.isEmpty()) {
-                    if (!(printables.get(printables.size() - 1) instanceof PrintSeperator)) {
-                        printables.add(PrintSeperator.SPACE);
-                    }
-                }
-                var expression = nextExpression(tokenizer);
-                printables.add(expression);
-                var peek = tokenizer.peek();
-                if (peek.type() == Token.Type.SYMBOL) {
-                    switch (peek.text()) {
-                        case ";" -> {
-                            nextExpectedSymbol(tokenizer, ";");
-                            printables.add(PrintSeperator.NONE);
-                        }
-                        case "," -> {
-                            nextExpectedSymbol(tokenizer, ",");
-                            printables.add(PrintSeperator.ZONE);
-                        }
-                        case ":" -> {
-                            done = true;
-                        }
-                        default -> {
-                            throw parseError("Unexpected symbol: " + peek);
+                if (isPeekSymbol(tokenizer, ";")) {
+                    nextExpectedSymbol(tokenizer, ";");
+                    printables.add(PrintSeperator.NONE);
+                } else if (isPeekSymbol(tokenizer, ",")) {
+                    nextExpectedSymbol(tokenizer, ",");
+                    printables.add(PrintSeperator.ZONE);
+                } else {
+                    if (!printables.isEmpty()) {
+                        if (!(printables.get(printables.size() - 1) instanceof PrintSeperator)) {
+                            printables.add(PrintSeperator.SPACE);
                         }
                     }
+                    var expression = nextExpression(tokenizer);
+                    printables.add(expression);
                 }
             }
         }
@@ -569,6 +558,11 @@ public class Parser {
             throw parseError("Expected " + expected +" got: " + token);
         }
         return token;
+    }
+    
+    private boolean isPeekSymbol(Tokenizer tokenizer, String symbol) throws IOException {
+        var token = tokenizer.peek();
+        return token.type() == Token.Type.SYMBOL && symbol.equals(token.text());
     }
 
     private Token nextExpectedFunction(Tokenizer tokenizer) throws IOException {
