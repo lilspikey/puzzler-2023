@@ -1,3 +1,4 @@
+import ast.Addition;
 import ast.AndExpression;
 import ast.ArrayInit;
 import ast.DataStatement;
@@ -6,7 +7,6 @@ import ast.DimStatement;
 import ast.EndStatement;
 import ast.Equals;
 import ast.Expression;
-import ast.Addition;
 import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatMultiplication;
@@ -108,9 +108,6 @@ public class Parser {
         while (true) {
             var statement = nextStatement(tokenizer);
             statements.add(statement);
-            if (statement instanceof IfStatement) {
-                statements.add(parseThenStatement(tokenizer));
-            }
             var next = tokenizer.peek();
             if (next.type() == Token.Type.EOL) {
                 tokenizer.next();
@@ -161,17 +158,6 @@ public class Parser {
             return nextLetStatement(tokenizer);
         }
         throw parseError("Unexpected token: " + first);
-    }
-
-    private Statement parseThenStatement(Tokenizer tokenizer) throws IOException {
-        nextExpectedKeyword(tokenizer, Keyword.THEN);
-        // see if we have implicit GOTO
-        if (tokenizer.peek().type() == Token.Type.NUMBER) {
-            var destinationLabel = nextExpectedNumber(tokenizer);
-            return new GotoStatement(destinationLabel.text());
-        } else {
-            return nextStatement(tokenizer);
-        }
     }
 
     private ForStatement nextForStatement(Tokenizer tokenizer) throws IOException {
@@ -454,8 +440,16 @@ public class Parser {
     private IfStatement nextIfStatement(Tokenizer tokenizer) throws IOException {
         nextExpectedKeyword(tokenizer, Keyword.IF);
         var predicate = nextExpression(tokenizer);
-        peekExpectedKeyword(tokenizer, Keyword.THEN);
-        return new IfStatement(predicate);
+        nextExpectedKeyword(tokenizer, Keyword.THEN);
+        // see if we have implicit GOTO
+        Statement then;
+        if (tokenizer.peek().type() == Token.Type.NUMBER) {
+            var destinationLabel = nextExpectedNumber(tokenizer);
+            then = new GotoStatement(destinationLabel.text());
+        } else {
+            then = nextStatement(tokenizer);
+        }
+        return new IfStatement(predicate, then);
     }
 
     private InputStatement nextInputStatement(Tokenizer tokenizer) throws IOException {

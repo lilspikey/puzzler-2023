@@ -321,12 +321,15 @@ public class JavaASM implements AstVisitor {
 
     @Override
     public void visit(IfStatement statement) {
-        var label = targetNextLineLabel(currentLine);
+        var falseLable = newTargettedLabel();
         addCallback(methodVisitor -> {
             statement.predicate().visit(this);
             methodVisitor.visitInsn(F2I);
             // NB logic is inverted 0 = true and -1 = false
-            methodVisitor.visitJumpInsn(IFNE, label);
+            methodVisitor.visitJumpInsn(IFNE, falseLable);
+            statement.then().visit(this);
+            methodVisitor.visitLabel(falseLable);
+            methodVisitor.visitInsn(NOP);
         });
     }
 
@@ -857,7 +860,11 @@ public class JavaASM implements AstVisitor {
     }
 
     private void addCallback(Consumer<MethodVisitor> callback) {
-        methodCallbacks.add(callback);
+        if (currentMethodVisitor != null) {
+           callback.accept(currentMethodVisitor);
+        } else {
+            methodCallbacks.add(callback);
+        }
     }
 
     private void createLocalVarIndex(VarName varName) {

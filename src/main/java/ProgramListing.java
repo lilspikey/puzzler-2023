@@ -54,7 +54,7 @@ public class ProgramListing implements AstVisitor {
                 System.out.print(" : ");
             }
             statement.visit(this);
-            if (!separator && !(statement instanceof IfStatement)) {
+            if (!separator) {
                 separator = true;
             }
         }
@@ -121,6 +121,7 @@ public class ProgramListing implements AstVisitor {
         System.out.print("IF ");
         statement.predicate().visit(this);
         System.out.print(" THEN ");
+        statement.then().visit(this);
     }
 
     @Override

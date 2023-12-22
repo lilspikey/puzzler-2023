@@ -47,3 +47,6 @@ Nested one line loop with single NEXT
  4  1 
  4  2 
  4  3 
+Loop with NEXT on same line as IF
+ 3 
+ 4 

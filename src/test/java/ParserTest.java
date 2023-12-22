@@ -159,8 +159,7 @@ class ParserTest {
                 List.of(
                     new Line("100", List.of(new LetStatement(new VarName("A", DataType.FLOAT), new FloatConstant(2.0f)))),
                     new Line("200", List.of(
-                        new IfStatement(new Variable(new VarName("A", DataType.FLOAT))),
-                        new GotoStatement("100")
+                        new IfStatement(new Variable(new VarName("A", DataType.FLOAT)), new GotoStatement("100"))
                     ))
                 )
             ),
