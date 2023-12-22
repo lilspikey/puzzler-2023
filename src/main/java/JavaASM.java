@@ -36,6 +36,7 @@ import ast.PrintStatement;
 import ast.Printable;
 import ast.Program;
 import ast.ReadStatement;
+import ast.RemarkStatement;
 import ast.RestoreStatement;
 import ast.ReturnStatement;
 import ast.StopStatement;
@@ -337,6 +338,10 @@ public class JavaASM implements AstVisitor {
     public void visit(DataStatement statement) {
         dataPositions.put(currentLine.numericLabel(), dataConstants.size());
         dataConstants.addAll(statement.constants());
+        // this is purely here in case we have code that tries to jump to this
+        addCallback(methodVisitor -> {
+            methodVisitor.visitInsn(NOP);
+        });
     }
 
     @Override
@@ -502,6 +507,14 @@ public class JavaASM implements AstVisitor {
                 visitArrayCreate(methodVisitor, dim, array.sizes());
             });
         }
+    }
+
+    @Override
+    public void visit(RemarkStatement statement) {
+        // this is purely here in case we have code that tries to jump to this
+        addCallback(methodVisitor -> {
+            methodVisitor.visitInsn(NOP);
+        });
     }
 
     @Override
