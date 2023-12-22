@@ -138,7 +138,7 @@ might not be so good.
   more and more code for the RETURN.  The `Dequeue` was used, instead of the actual JVM stack, as it helps side step
   issues with class file verification and leaving things on the stack when jumping in a non-structured way.
 * Pairing of FOR + NEXT is done statically at compile time
-* I suspect the less "structured" the BASIC code the more likely there will be problems
+* Less "structured" the BASIC code has problems (e.g. if statements that GOTO earlier lines)
 * If this was a real project, then I'd spend more time making the main parser do more validation.  Most things should
   get throw an error if there is a problem, but sometimes the errors will not provide much information about where
   the problem might really be.
@@ -151,4 +151,6 @@ might not be so good.
   * http://www.vintage-basic.net/bcg/bug.bas
   * http://www.vintage-basic.net/bcg/digits.bas
   * http://www.vintage-basic.net/bcg/hi-lo.bas
+  * http://www.vintage-basic.net/bcg/life.bas (compiles and runs, but not sure it's actually working)
+  * http://www.vintage-basic.net/bcg/pizza.bas
 * The program http://www.vintage-basic.net/bcg/checkers.bas seems to try to use 0-based arrays!
