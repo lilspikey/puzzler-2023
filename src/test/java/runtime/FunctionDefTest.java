@@ -24,8 +24,10 @@ class FunctionDefTest {
                 new FunctionDef("LEFT$", DataType.STRING, List.of(DataType.STRING, DataType.FLOAT)),
                 new FunctionDef("MID$", DataType.STRING, List.of(DataType.STRING, DataType.FLOAT)),
                 new FunctionDef("MID$", DataType.STRING, List.of(DataType.STRING, DataType.FLOAT, DataType.FLOAT)),
+                new FunctionDef("RIGHT$", DataType.STRING, List.of(DataType.STRING, DataType.FLOAT)),
                 new FunctionDef("LEN", DataType.FLOAT, List.of(DataType.STRING)),
-                new FunctionDef("SGN", DataType.FLOAT, List.of(DataType.FLOAT))
+                new FunctionDef("SGN", DataType.FLOAT, List.of(DataType.FLOAT)),
+                new FunctionDef("VAL", DataType.FLOAT, List.of(DataType.STRING))
             ),
             FunctionDef.getFunctionDefs()
         );

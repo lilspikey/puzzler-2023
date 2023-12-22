@@ -93,6 +93,19 @@ public class BasRuntime implements Runnable {
         return s.substring(index, Math.min(index + (int) len, s.length()));
     }
 
+    String fnRIGHT_DOLLAR(String s, float len) {
+        var i = (int) Math.max(0, s.length() - len);
+        return s.substring(i);
+    }
+
+    float fnVAL(String s) {
+        try {
+            return Float.parseFloat(s);
+        } catch (NumberFormatException e) {
+            return 0.0f;
+        }
+    }
+
     float readFLOAT() {
         var data = this.data[nextDataPtr++];
         return (Float) data;
