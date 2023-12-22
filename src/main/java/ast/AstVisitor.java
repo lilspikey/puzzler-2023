@@ -69,7 +69,7 @@ public interface AstVisitor {
 
     void visit(OrExpression expression);
 
-    void visit(FloatAddition expression);
+    void visit(Addition expression);
 
     void visit(FloatSubtraction expression);
 

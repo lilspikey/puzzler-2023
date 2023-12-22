@@ -6,7 +6,7 @@ import ast.DimStatement;
 import ast.EndStatement;
 import ast.Equals;
 import ast.Expression;
-import ast.FloatAddition;
+import ast.Addition;
 import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatMultiplication;
@@ -304,7 +304,7 @@ public class ProgramListing implements AstVisitor {
     }
 
     @Override
-    public void visit(FloatAddition expression) {
+    public void visit(Addition expression) {
         binaryExpression("+", expression);
     }
 

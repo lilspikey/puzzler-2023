@@ -1,3 +1,4 @@
+import ast.Addition;
 import ast.AndExpression;
 import ast.ArrayDim;
 import ast.AstVisitor;
@@ -8,7 +9,6 @@ import ast.DimStatement;
 import ast.EndStatement;
 import ast.Equals;
 import ast.Expression;
-import ast.FloatAddition;
 import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatMultiplication;
@@ -683,9 +683,16 @@ public class JavaASM implements AstVisitor {
     }
 
     @Override
-    public void visit(FloatAddition expression) {
+    public void visit(Addition expression) {
         visitExpressions(expression);
-        currentMethodVisitor.visitInsn(FADD);
+        switch (expression.getDataType()) {
+            case FLOAT -> currentMethodVisitor.visitInsn(FADD);
+            case STRING -> currentMethodVisitor.visitMethodInsn(INVOKEVIRTUAL,
+                "java/lang/String",
+                "concat",
+                String.format("(%s)%s", String.class.descriptorString(), String.class.descriptorString())
+            );
+        }
     }
 
     @Override

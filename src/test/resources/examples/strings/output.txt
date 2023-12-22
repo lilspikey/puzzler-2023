@@ -2,3 +2,4 @@ hello there
 A < B
 A <= B
 A$ = hello
+hello cat

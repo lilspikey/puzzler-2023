@@ -1,5 +1,5 @@
 import ast.DataType;
-import ast.FloatAddition;
+import ast.Addition;
 import ast.FloatConstant;
 import ast.FloatMultiplication;
 import ast.FloatNegation;
@@ -77,8 +77,8 @@ class ParserTest {
                     new Line("100", List.of(new LetStatement(new VarName("A", DataType.FLOAT), new FloatConstant(2.0f)))),
                     new Line("200", List.of(
                         new LetStatement(new VarName("A", DataType.FLOAT),
-                            new FloatAddition(
-                                new FloatAddition(
+                            new Addition(
+                                new Addition(
                                     new Variable(new VarName("A", DataType.FLOAT)), new FloatConstant(1.0f)
                                 ),
                                 new FloatConstant(2.0f)
@@ -133,7 +133,7 @@ class ParserTest {
                     new Line("100", List.of(new LetStatement(new VarName("A", DataType.FLOAT), new FloatConstant(2.0f)))),
                     new Line("200", List.of(
                         new LetStatement(new VarName("A", DataType.FLOAT),
-                            new FloatAddition(
+                            new Addition(
                                 new Variable(new VarName("A", DataType.FLOAT)),
                                 new FloatMultiplication(
                                     new FloatConstant(3.0f), new FloatConstant(2.0f)
@@ -178,10 +178,10 @@ class ParserTest {
             new Program(
                 List.of(
                     new Line("100", List.of(
-                        new LetStatement(new VarName("A", DataType.FLOAT), new FloatAddition(
-                            new FloatAddition(
+                        new LetStatement(new VarName("A", DataType.FLOAT), new Addition(
+                            new Addition(
                                 new FloatMultiplication(
-                                    new FloatAddition(new FloatConstant(1.0f), new FloatConstant(2.0f)),
+                                    new Addition(new FloatConstant(1.0f), new FloatConstant(2.0f)),
                                     new FloatConstant(4.0f)
                                 ),
                                 new FloatConstant(1.0f)
@@ -243,7 +243,7 @@ class ParserTest {
                 new Line("100",
                     List.of(
                         new LetStatement(new VarName("A", DataType.FLOAT),
-                            new FloatAddition(
+                            new Addition(
                                 new FloatNegation(new FloatConstant(2.0f)),
                                 new FloatMultiplication(new FloatNegation(new FloatConstant(3.0f)), new FloatConstant(7.0f))
                             )

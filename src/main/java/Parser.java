@@ -6,7 +6,7 @@ import ast.DimStatement;
 import ast.EndStatement;
 import ast.Equals;
 import ast.Expression;
-import ast.FloatAddition;
+import ast.Addition;
 import ast.FloatConstant;
 import ast.FloatDivision;
 import ast.FloatMultiplication;
@@ -70,7 +70,7 @@ public class Parser {
         binaryOperators.put(">=", new BinaryOperatorInfo(3, Associativity.LEFT, GreaterThanEquals::new));
         binaryOperators.put("<", new BinaryOperatorInfo(3, Associativity.LEFT, LessThan::new));
         binaryOperators.put("<=", new BinaryOperatorInfo(3, Associativity.LEFT, LessThanEquals::new));
-        binaryOperators.put("+", new BinaryOperatorInfo(4, Associativity.LEFT, FloatAddition::new));
+        binaryOperators.put("+", new BinaryOperatorInfo(4, Associativity.LEFT, Addition::new));
         binaryOperators.put("-", new BinaryOperatorInfo(4, Associativity.LEFT, FloatSubtraction::new));
         binaryOperators.put("*", new BinaryOperatorInfo(5, Associativity.LEFT, FloatMultiplication::new));
         binaryOperators.put("/", new BinaryOperatorInfo(5, Associativity.LEFT, FloatDivision::new));

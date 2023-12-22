@@ -6,3 +6,5 @@
 60 IF "A" >= "B" THEN PRINT "A >= B"
 70 IF A$ = "hello" THEN PRINT "A$ = hello"
 80 IF A$ <> "hello" THEN PRINT "A$ <> hello"
+90 PRINT A$ + " cat"
+ 
