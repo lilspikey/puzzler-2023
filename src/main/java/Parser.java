@@ -506,6 +506,11 @@ public class Parser {
         var peek = tokenizer.peek();
         if (peek.type() == Token.Type.SYMBOL && peek.text().equals("(")) {
             var indexes = nextFunctionParams(tokenizer);
+            for (var index: indexes) {
+                if (index.getDataType() != DataType.FLOAT) {
+                    throw parseError("Array indexes must be of type FLOAT");
+                }
+            }
             // append brackets to name so we don't clash with scalar types when assigning
             // local vars
             return new VarName(name + "()", dataType, indexes);

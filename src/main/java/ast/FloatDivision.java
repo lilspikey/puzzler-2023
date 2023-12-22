@@ -3,7 +3,8 @@ package ast;
 public record FloatDivision(Expression lhs, Expression rhs) implements BinaryExpression {
     @Override
     public DataType getDataType() {
-        return DataType.FLOAT;
+        DataType.ensureSame(DataType.FLOAT, lhs().getDataType());
+        return DataType.ensureSame(DataType.FLOAT, rhs().getDataType());
     }
 
     @Override
