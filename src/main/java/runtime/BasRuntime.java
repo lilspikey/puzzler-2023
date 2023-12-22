@@ -106,6 +106,10 @@ public class BasRuntime implements Runnable {
         }
     }
 
+    String fnSTR_DOLLAR(float f) {
+        return formatFloat(f);
+    }
+
     float readFLOAT() {
         var data = this.data[nextDataPtr++];
         return (Float) data;
